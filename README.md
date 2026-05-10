@@ -4,9 +4,10 @@
 
 ## Highlights
 
-- **Landing** (`/`) and **dashboard** (`/dashboard`) — sidebar shell aligned with Screenlify-style Nuxt UI patterns.
-- **`POST /api/generate-image`** — validates input; **demo mode** returns an inline SVG (no API keys). Implement real SDK calls in one file when you are ready (`docs/IMAGE_PIPELINE.md`).
-- **Documentation** in `docs/` — architecture, **design decisions & rationale** (`DECISIONS.md`), performance budget, AI SEO, animation notes.
+- **Landing** (`/`) and **dashboard** (`/dashboard`) — **Nananuxt Relight–style** shell: `UNavigationMenu` sidebar, `UDashboardPanel` body-only, **12-column** grid (**2 / 8 / 2**), sticky **Generate** rail.
+- **`POST /api/image/*`** — one route per image model; set keys in `.env` (`docs/IMAGE_PIPELINE.md`).
+- **`POST /api/text/enhance-prompt`** / **`POST /api/text/surprise-prompt`** — OpenAI chat helpers for the studio (`server/utils/promptAssistOpenAi.ts`).
+- **Documentation** in `docs/` — architecture, **[performance](./docs/PERFORMANCE.md)** (budgets, CWV, caching), **design decisions** (`DECISIONS.md`), AI SEO, animation. **Gemini:** [Nano Banana (image generation)](docs/GEMINI_NANO_BANANA.md), [image understanding / vision](docs/GEMINI_IMAGE_UNDERSTANDING.md) (see also `IMAGE_PIPELINE.md`).
 - **Agent context** — `AGENTS.md`, `public/llms.txt`, `public/pricing.md` (replace with your product copy).
 
 ## Requirements
@@ -22,7 +23,7 @@ cp .env.example .env
 bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) → **Open studio** → **Generate** (works with demo mode).
+Open [http://localhost:3000](http://localhost:3000) → **Open studio** → **Generate** (requires the API key for the provider you select).
 
 ## Scripts
 
@@ -34,27 +35,39 @@ Open [http://localhost:3000](http://localhost:3000) → **Open studio** → **Ge
 
 ## Environment
 
-See `.env.example`. For local iteration without provider keys, keep:
-
-`NUXT_PUBLIC_IMAGE_GEN_DEMO=true`
-
-Set `NUXT_PUBLIC_SITE_URL` for correct `og:url` and SEO when you deploy.
+See `.env.example`. Set `OPENAI_API_KEY` and/or `GEMINI_API_KEY` (or `GOOGLE_API_KEY` / `NUXT_GEMINI_API_KEY`) depending on the studio provider. Set `NUXT_PUBLIC_SITE_URL` for correct `og:url` and SEO when you deploy.
 
 ## Project layout (abbreviated)
 
 ```
 app/
-  components/Dashboard/DashboardShell.vue
-  composables/useGenerateImage.ts
+  components/Dashboard/Sidebar/Container.vue
+  components/Dashboard/Studio/Container.vue
+  components/Dashboard/PageNavbar.vue
   layouts/dashboard.vue
   pages/(home).vue
   pages/dashboard/(studio).vue
   pages/dashboard/settings.vue
+  composables/useDashboardSidebarOpen.ts
+  composables/useGenerateImage.ts
   stores/studio.ts
 server/
-  api/generate-image.post.ts
+  api/image/
+    gpt-image-1-5.post.ts
+    gpt-image-2.post.ts
+    gemini-3-1-flash-image-preview.post.ts
+    gemini-3-pro-image-preview.post.ts
+    gemini-2-5-flash-image.post.ts
+  api/text/
+    enhance-prompt.post.ts
+    surprise-prompt.post.ts
+  utils/generateImageShared.ts
+  utils/promptAssistOpenAi.ts
 docs/
   DECISIONS.md
+  GEMINI_IMAGE_UNDERSTANDING.md
+  GEMINI_NANO_BANANA.md
+  IMAGE_PIPELINE.md
 public/
   llms.txt
   pricing.md

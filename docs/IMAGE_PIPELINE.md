@@ -1,47 +1,55 @@
-# Image pipeline (implementing real generation)
+# Image pipeline
 
-The stock handler only runs **demo mode** or returns **501** when keys exist but code is not wired. Use this as a map when porting patterns from **screenlify** or **nananuxt**.
+Image generation is split **one HTTP route per studio model** under **`/api/image/*`**. Shared logic lives in **`server/utils/generateImageShared.ts`**. URL slugs use **hyphens** instead of dots in Google model IDs (e.g. `gemini-3.1-…` → `gemini-3-1-…`). The client maps canonical model IDs to paths via **`app/utils/imageApiRoutes.ts`** (`postUrlForImageModel`). Allowed model IDs remain in **`app/utils/studioImageModels.ts`**.
 
-## Contract
+## Contract — `POST /api/image/…`
 
-`POST /api/generate-image` body:
+| Route | Model ID | Body |
+|-------|----------|------|
+| `POST /api/image/gpt-image-1-5` | `gpt-image-1.5` | `prompt` (required), `aspect_ratio?`, `openai_quality?` |
+| `POST /api/image/gpt-image-2` | `gpt-image-2` | `prompt` (required), `openai_size?`, `openai_quality?` |
+| `POST /api/image/gemini-3-1-flash-image-preview` | `gemini-3.1-flash-image-preview` | `prompt`, `aspect_ratio?`, `nanobanana2?` — see `app/utils/gemini31Nanobanana2.ts` |
+| `POST /api/image/gemini-3-pro-image-preview` | `gemini-3-pro-image-preview` | `prompt`, `aspect_ratio?`, `nanobanana_pro?` — see `app/utils/geminiProNanobanana.ts` |
+| `POST /api/image/gemini-2-5-flash-image` | `gemini-2.5-flash-image` | `prompt`, `aspect_ratio?`, `nanobanana_25?` — see `app/utils/gemini25Nanobanana.ts` |
 
-| Field | Type | Notes |
-|-------|------|--------|
-| `prompt` | string | Required |
-| `provider` | `"openai"` \| `"google-gemini"` | Default: google-gemini |
-| `model` | string | Map to real model IDs in your implementation |
-| `aspect_ratio` | string | e.g. `1:1`, `16:9` |
-
-Response:
+**Response** (same shape for every route):
 
 ```json
 {
-  "output": "data:image/...;base64,...",
+  "output": "data:image/png;base64,...",
   "provider": "openai",
-  "model": "gpt-image-1",
-  "demo": true
+  "model": "gpt-image-1.5"
 }
 ```
 
-Return a **data URL** or an **https URL** the client can put in `<img src>`.
+Return value is a **data URL** the client can use in `<img src>`.
 
 ## OpenAI (GPT Image)
 
-Reference: `screenlify/server/api/ai/openai-image.post.ts` — uses `openai` package, `openai.images.generate`, `b64_json` → data URL. For edits with reference images, use `images.edit` and route selection like `screenlify/app/utils/ai-generate.ts` (`openai-image` vs `openai-image-edit`).
+- **`gpt-image-1.5`** — four **aspect** presets map to fixed API sizes (`1024×1024`, `1536×1024`, `1792×1024`, `1024×1792`). Client sends `aspect_ratio`; the server maps to `size`.
+- **`gpt-image-2`** — **`size`** is sent explicitly (popular resolutions from the [image generation guide](https://developers.openai.com/api/docs/guides/image-generation), including `auto`, 1K/2K/4K presets). Pass `openai_size` from the studio; arbitrary valid `WxH` could be added later.
+- **`quality`** (`low` | `medium` | `high` | `auto`) is sent for both GPT Image models when `provider` is OpenAI (`openai_quality`).
 
-Add dependency: `openai` (server-side only).
+Uses the `openai` package: `images.generate` with `b64_json` → data URL.
 
-## Google (Gemini / Imagen)
+## Google (Gemini native image)
 
-Reference: `screenlify/server/api/ai/google-gemini-image.post.ts` or `nananuxt/server/api/nanobanana-gemini.post.ts` — Google Gen AI SDK, `generateContent` with image modalities or Imagen `generateImages` depending on model.
+Uses `@google/genai`: `GoogleGenAI` → `models.generateContent` with `responseModalities: ['TEXT', 'IMAGE']` and `imageConfig` from **`buildGeminiImageConfig()`** in `app/utils/geminiAspectRatios.ts`: **`gemini-2.5-flash-image`** sends **aspect ratio only** (or **{}** when aspect is **Auto**); **Gemini 3.x** image models add **`imageSize: '1K'`**; **Nanobanana 2** / **Pro** / **Nanobanana** with **Auto** omit **`aspectRatio`** (model default).
 
-Add dependency: `@google/genai` (or the package version your vendor docs specify).
+**Model IDs:** Only **native image** Gemini models belong in the studio allowlist (`app/utils/studioImageModels.ts`). **Do not confuse** text-oriented Gemini 3 IDs with image models: **`gemini-3-flash-preview`**, **`gemini-3.1-pro-preview`**, **`gemini-3.1-flash-lite`** (text output; image generation not supported — [Gemini 3 guide](https://ai.google.dev/gemini-api/docs/gemini-3)). **`gemini-3.1-flash-lite`** is especially easy to mix up with **`gemini-3.1-flash-image-preview`**. These handlers use **`gemini-3.1-flash-image-preview`**, **`gemini-3-pro-image-preview`**, **`gemini-2.5-flash-image`**, etc.
 
-## Replicate (nananuxt-style)
+**Nano Banana (product naming), prompting, resolutions, Thinking, SynthID, and limits** — see **[GEMINI_NANO_BANANA.md](./GEMINI_NANO_BANANA.md)** (summary of [Google’s image generation guide](https://ai.google.dev/gemini-api/docs/image-generation)).
 
-`nananuxt/server/api/nanobanana.ts` calls Replicate models (`google/nano-banana`, etc.). You can add a third `provider` in the template once the client and store expose it.
+**Image understanding (vision)** — Captioning, VQA, multi-image comparison, object detection, `media_resolution`, inline vs File API, token/tile rules: **[GEMINI_IMAGE_UNDERSTANDING.md](./GEMINI_IMAGE_UNDERSTANDING.md)** (summary of [Google’s image understanding guide](https://ai.google.dev/gemini-api/docs/image-understanding)). Not implemented in the stock **`/api/image/*`** image-generation routes.
+
+## Prompt helpers (OpenAI chat)
+
+Studio **Enhance prompt** → `POST /api/text/enhance-prompt` with `{ "prompt": "…" }`. **Surprise me** → `POST /api/text/surprise-prompt` (empty body). Both require `OPENAI_API_KEY` and use `openaiPromptModel` from runtime config (default **`gpt-4o-mini`**; set `OPENAI_PROMPT_MODEL` to override). Implementation: `server/utils/promptAssistOpenAi.ts`.
+
+## Extending
+
+Reference: `screenlify/server/api/ai/openai-image.post.ts`, `screenlify/server/api/ai/google-gemini-image.post.ts` — batching, streaming NDJSON, reference images, Imagen `generateImages`.
 
 ## Streaming (optional)
 
-For NDJSON streaming like Screenlify’s studio, add `stream: true` handling in a **separate** route or extend this one — keep the template simple until you need it.
+For NDJSON streaming like Screenlify’s studio, add `stream: true` handling in a **separate** route or extend this one.

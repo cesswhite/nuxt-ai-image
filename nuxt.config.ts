@@ -11,6 +11,15 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-11-11',
   routeRules: {
     '/': { prerender: true },
+    ...(isProd
+      ? {
+          '/_nuxt/**': {
+            headers: {
+              'cache-control': 'public, max-age=31536000, immutable',
+            },
+          },
+        }
+      : {}),
     '/**': {
       headers: {
         'x-content-type-options': 'nosniff',
@@ -20,6 +29,11 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     openaiApiKey: process.env.OPENAI_API_KEY || '',
+    /** Chat model for Enhance / Surprise Me (text). Image generation uses image models separately. */
+    openaiPromptModel:
+      process.env.OPENAI_PROMPT_MODEL
+      || process.env.NUXT_OPENAI_PROMPT_MODEL
+      || 'gpt-4o-mini',
     geminiApiKey:
       process.env.GEMINI_API_KEY
       || process.env.NUXT_GEMINI_API_KEY
@@ -27,8 +41,6 @@ export default defineNuxtConfig({
       || '',
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || '',
-      /** When true, `/api/generate-image` returns a local placeholder (no external API calls). */
-      imageGenDemo: process.env.NUXT_PUBLIC_IMAGE_GEN_DEMO === 'true',
     },
   },
   nitro: {

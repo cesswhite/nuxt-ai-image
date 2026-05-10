@@ -5,15 +5,17 @@
 ## What it is
 
 - File-based routes: `/` (landing), `/dashboard` (studio), `/dashboard/settings`.
-- Demo-safe server route `POST /api/generate-image` — placeholder image when `NUXT_PUBLIC_IMAGE_GEN_DEMO=true`.
+- Server routes `POST /api/image/*` — one path per image model; OpenAI or Google GenAI (keys in `.env`).
+- `POST /api/text/enhance-prompt`, `POST /api/text/surprise-prompt` — OpenAI chat helpers for the studio (see `server/utils/promptAssistOpenAi.ts`).
 - Pinia store `useStudioStore`, composable `useGenerateImage`.
 - Dashboard shell: `USidebar`, `UCard`, `UForm`, tokens (`text-highlighted`, `bg-default`, etc.).
 
 ## Key files
 
-- `docs/DECISIONS.md` — rationale for stack, demo mode, route naming, and docs split
+- `docs/DECISIONS.md` — rationale for stack, route naming, and docs split
 - `app/pages/dashboard/(studio).vue` — studio UI
-- `server/api/generate-image.post.ts` — implement OpenAI or Google SDKs here
+- `server/api/image/*.post.ts` + `server/utils/generateImageShared.ts` — OpenAI + Google GenAI image generation
+- `server/api/text/*.post.ts` + `server/utils/promptAssistOpenAi.ts` — enhance / surprise prompt (OpenAI chat)
 - `docs/IMAGE_PIPELINE.md` — wiring guide
 - `docs/PERFORMANCE.md` — budgets and Core Web Vitals habits
 - `docs/AI_SEO.md` — llms.txt, structured pages, citations

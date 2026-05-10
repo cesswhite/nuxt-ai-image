@@ -4,11 +4,19 @@ This document explains **why** the template is structured the way it is, not onl
 
 ---
 
+## `UDashboardPanel`, sidebar, and Relight grid (Nananuxt)
+
+**Decision:** **Studio** follows **`relight.vue`**: **`UDashboardPanel`** with **full-bleed body** (`py-0! p-0!`). **`layouts/dashboard.vue`** wraps routes in **`UDashboardGroup`** (with **`ui.dashboardGroup.base`** overriding the default full-screen `fixed` shell so it plays nicely under **`UApp`**). **Settings** uses **`#header`** + **`DashboardPageNavbar`**. **Sidebar** uses **`USidebar`** + **`useRuntimeHook('dashboard:sidebar:toggle')`** so **`UDashboardNavbar`**’s **`UDashboardSidebarToggle`** opens/closes the same sidebar on mobile.
+
+**Why:** Nuxt UI’s **`UDashboardPanel`** / **`UDashboardNavbar`** expect a **`UDashboardGroup`** ancestor for context. Relight stays **navbar-free on desktop**; we add **`DashboardPageNavbar` + `lg:hidden`** only so small screens get a proper **`UDashboardSidebarToggle`**. **Settings** keeps a visible navbar on all breakpoints.
+
+---
+
 ## Nuxt 4 + Nitro server routes
 
-**Decision:** Full Nuxt with a single server handler for generation (`server/api/generate-image.post.ts`).
+**Decision:** Full Nuxt with **one Nitro route per image model** under `server/api/image/*.post.ts`, sharing **`server/utils/generateImageShared.ts`**.
 
-**Why:** Image APIs must use **secret keys** and often **large payloads**. Keeping calls on the server avoids exposing keys in the browser, matches how production apps (e.g. Screenlify, nananuxt) structure AI routes, and lets you add auth, rate limits, and logging in one place later. Nitro runs everywhere Nuxt deploys (Node, serverless, edge with caveats for vendor SDKs).
+**Why:** Image APIs must use **secret keys** and often **large payloads**. Keeping calls on the server avoids exposing keys in the browser, matches how production apps (e.g. Screenlify, nananuxt) structure AI routes, and lets you add auth, rate limits, and logging in one place later. Split routes make each model’s contract obvious and keep handlers small; Nitro runs everywhere Nuxt deploys (Node, serverless, edge with caveats for vendor SDKs).
 
 ---
 
@@ -44,25 +52,23 @@ This document explains **why** the template is structured the way it is, not onl
 
 ---
 
-## Demo mode (`NUXT_PUBLIC_IMAGE_GEN_DEMO`)
+## Real provider calls in `generateImageShared.ts`
 
-**Decision:** A **public** flag (read on server) that returns a **local SVG data URL** with **no outbound API calls**.
+**Decision:** The shared module calls **OpenAI** (`openai` SDK, `images.generate`) or **Google GenAI** (`@google/genai`, `generateContent` with image output) from thin **`server/api/image/*`** handlers — one entry point per model. No placeholder or “demo only” branch.
 
-**Why:** Developers should get a **working end-to-end path** (prompt → result area) without API keys on day one. CI and demos stay deterministic (no flaky vendor APIs). An **inline SVG** avoids extra binary assets and keeps responses small for quick performance checks.
-
-**Trade-off:** The flag is not secret—treat demo mode as a **development UX** feature, not a security boundary. Production **billing** and **quotas** belong in your fork.
+**Why:** The studio should always reflect **real** billing, latency, and errors for the chosen vendor. Local development uses real keys in `.env` (or a stub backend you swap in yourself).
 
 ---
 
-## HTTP 503 vs 501 in `generate-image.post.ts`
+## HTTP codes in image routes
 
-**Decision:** **503** when keys are missing for the chosen provider; **501** when keys exist but the handler still has no SDK implementation.
+**Decision:** **400** invalid body; **503** missing API key for the selected provider; **502** (or upstream status) when the vendor returns an error or no image.
 
-**Why:** Missing configuration is a **service not ready** situation (fix `.env`). Keys present but code missing is **deliberately unimplemented**—different from a random 500. Separating these cases improves logs, support, and agent debugging.
+**Why:** Missing keys are configuration problems. Bad requests are client errors. Provider failures are gateway/bad-response semantics distinct from a generic 500.
 
 ---
 
-## Single route contract (`output` string)
+## Shared response contract (`output` string)
 
 **Decision:** The API returns **`output`** as a string suitable for `<img src>` (data URL or HTTPS URL).
 
@@ -110,9 +116,16 @@ This document explains **why** the template is structured the way it is, not onl
 
 ---
 
+## Performance defaults (prerender, cache, images)
+
+**Decision:** **`/`** is **prerendered**; in **production**, **`/_nuxt/**`** gets long **`immutable`** cache headers; **Nitro** compresses public assets. **`@nuxt/image`** is configured for AVIF/WebP but **`<NuxtImg>`** is optional until marketing pages add raster heroes. The studio **preview** `<img>` uses **`lazy`**, **`async` decode**, **`fetchpriority="low"`**, and explicit dimensions to limit **CLS** and LCP competition.
+
+**Why:** Cheap wins for static shell and hashed chunks; honest docs avoid implying Nuxt Image optimizes assets you never route through it. Details and budgets: **`docs/PERFORMANCE.md`**.
+
+---
+
 ## What we deliberately did *not* include
 
-- **No** OpenAI or Google SDK in `package.json` by default — avoids dependency drift until you intentionally implement (`docs/IMAGE_PIPELINE.md`).
 - **No** auth, billing, or credits — those vary per product; this stays an **anchor**, not a full vertical.
 - **No** NDJSON streaming in v1 — add when you need live multi-image previews like production studio UIs.
 

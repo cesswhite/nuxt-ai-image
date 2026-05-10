@@ -17,7 +17,7 @@
           Nuxt AI Images
         </h1>
         <p class="text-pretty text-base text-dimmed md:text-lg">
-          Anchor template for AI image products: Nuxt UI dashboard shell, demo-safe API route, performance and AI-search docs, and Cursor skills.
+          Anchor template for AI image products: Nuxt UI dashboard shell, server-side OpenAI / Gemini generation, performance and AI-search docs, and Cursor skills.
         </p>
         <div class="flex flex-wrap items-center justify-center gap-3">
           <UButton
