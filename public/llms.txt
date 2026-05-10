@@ -1,0 +1,29 @@
+# Nuxt AI Images
+
+> Minimal Nuxt 4 + Nuxt UI template for AI image generation products. Use it as an anchor repo when starting new OpenAI or Google image pipelines.
+
+## What it is
+
+- File-based routes: `/` (landing), `/dashboard` (studio), `/dashboard/settings`.
+- Demo-safe server route `POST /api/generate-image` — placeholder image when `NUXT_PUBLIC_IMAGE_GEN_DEMO=true`.
+- Pinia store `useStudioStore`, composable `useGenerateImage`.
+- Dashboard shell: `USidebar`, `UCard`, `UForm`, tokens (`text-highlighted`, `bg-default`, etc.).
+
+## Key files
+
+- `docs/DECISIONS.md` — rationale for stack, demo mode, route naming, and docs split
+- `app/pages/dashboard/(studio).vue` — studio UI
+- `server/api/generate-image.post.ts` — implement OpenAI or Google SDKs here
+- `docs/IMAGE_PIPELINE.md` — wiring guide
+- `docs/PERFORMANCE.md` — budgets and Core Web Vitals habits
+- `docs/AI_SEO.md` — llms.txt, structured pages, citations
+
+## Links
+
+- [Nuxt UI](https://ui.nuxt.com/)
+- [Nuxt](https://nuxt.com/)
+- [VueUse Motion](https://motion.vueuse.org/)
+
+## Contact / customization
+
+Fork this template and replace branding (`AppLogo`, `app.config.ts` colors, copy on landing and dashboard).
