@@ -4,6 +4,7 @@ import {
   NANOBANANA2_DEFAULTS,
   type Nanobanana2ImageSize,
   type Nanobanana2OutputFormat,
+  type Nanobanana2ThinkingLevel,
 } from '~/utils/gemini31Nanobanana2'
 import {
   NANOBANANA_PRO_DEFAULTS,
@@ -12,6 +13,9 @@ import {
 import { NANOBANANA_25_DEFAULTS } from '~/utils/gemini25Nanobanana'
 
 export type StudioProvider = 'openai' | 'google-gemini'
+
+/** Studio-only: omit `thinking_level` in API body when `'default'`. */
+export type Nanobanana2ThinkingUi = 'default' | Nanobanana2ThinkingLevel
 
 export const useStudioStore = defineStore('studio', {
   state: () => ({
@@ -33,6 +37,8 @@ export const useStudioStore = defineStore('studio', {
     nanobanana2StopSequencesRaw: NANOBANANA2_DEFAULTS.stopSequencesRaw,
     nanobanana2MaxOutputTokens: NANOBANANA2_DEFAULTS.maxOutputTokens,
     nanobanana2TopP: NANOBANANA2_DEFAULTS.topP,
+    /** When not `default`, sends flat `thinking_level` on the Gemini 3.1 image POST body. */
+    nanobanana2ThinkingLevel: 'default' as Nanobanana2ThinkingUi,
     /** Nanobanana Pro — `gemini-3-pro-image-preview` (AI Studio run settings). */
     nanobananaProSystemInstruction: NANOBANANA_PRO_DEFAULTS.systemInstruction,
     nanobananaProTemperature: NANOBANANA_PRO_DEFAULTS.temperature,

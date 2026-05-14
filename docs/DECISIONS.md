@@ -14,7 +14,7 @@ This document explains **why** the template is structured the way it is, not onl
 
 ## Nuxt 4 + Nitro server routes
 
-**Decision:** Full Nuxt with **one Nitro route per image model** under `server/api/image/*.post.ts`, sharing **`server/utils/generateImageShared.ts`**.
+**Decision:** Full Nuxt with **one Nitro route per image model** under `server/api/image/*.post.ts` (optional tiny helpers in `server/utils/imageApiCommon.ts`).
 
 **Why:** Image APIs must use **secret keys** and often **large payloads**. Keeping calls on the server avoids exposing keys in the browser, matches how production apps (e.g. Screenlify, nananuxt) structure AI routes, and lets you add auth, rate limits, and logging in one place later. Split routes make each model’s contract obvious and keep handlers small; Nitro runs everywhere Nuxt deploys (Node, serverless, edge with caveats for vendor SDKs).
 
@@ -52,7 +52,7 @@ This document explains **why** the template is structured the way it is, not onl
 
 ---
 
-## Real provider calls in `generateImageShared.ts`
+## Real provider calls in `server/api/image/*.post.ts`
 
 **Decision:** The shared module calls **OpenAI** (`openai` SDK, `images.generate`) or **Google GenAI** (`@google/genai`, `generateContent` with image output) from thin **`server/api/image/*`** handlers — one entry point per model. No placeholder or “demo only” branch.
 

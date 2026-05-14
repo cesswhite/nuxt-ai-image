@@ -23,14 +23,14 @@ For **why** these choices were made (Bun, HTTP codes, route groups, docs split, 
 
 1. User edits form in **`DashboardStudioContainer`** (loaded from `app/pages/dashboard/(studio).vue`).
 2. `useGenerateImage().generate()` resolves the URL with **`postUrlForImageModel`** (`app/utils/imageApiRoutes.ts`) and **`POST`s** to **`/api/image/<model-slug>`** — one route per studio model.
-3. The matching **`server/api/image/*.post.ts`** reads the body and calls **`server/utils/generateImageShared.ts`**, which invokes **OpenAI** (`images.generate`) or **Google GenAI** (`generateContent` with image output). Missing key for the selected provider → **503**; vendor failure or empty image → **502** (or upstream status when exposed).
+3. The matching **`server/api/image/*.post.ts`** reads the body and calls **OpenAI** (`images.generate`) or **Google GenAI** (`generateContent` / `generateContentStream` with image output). Missing key for the selected provider → **503**; vendor failure or empty image → **502** (or upstream status when exposed).
 4. **Enhance prompt** / **Surprise me** call **`POST /api/text/enhance-prompt`** and **`POST /api/text/surprise-prompt`** (`server/utils/promptAssistOpenAi.ts`, OpenAI chat). Same **`OPENAI_API_KEY`** as GPT Image; optional **`OPENAI_PROMPT_MODEL`**.
 
 ## Forking to a new product
 
 1. Copy the repo (or subtree) into a new folder.
 2. Rename branding strings and `AppLogo` if needed.
-3. Extend **`server/utils/generateImageShared.ts`** or add a **`server/api/image/*.post.ts`** route using the same response shape: `{ output: string, provider, model }`.
+3. Add or extend a **`server/api/image/*.post.ts`** route using the same response shape: `{ output: string, provider, model }` (reuse **`server/utils/imageApiCommon.ts`** for auth helpers if needed).
 4. Add auth, rate limits, and credits when you move beyond a template.
 
 ## Security

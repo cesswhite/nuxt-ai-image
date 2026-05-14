@@ -14,7 +14,7 @@
 
 - `docs/DECISIONS.md` — rationale for stack, route naming, and docs split
 - `app/pages/dashboard/(studio).vue` — studio UI
-- `server/api/image/*.post.ts` + `server/utils/generateImageShared.ts` — OpenAI + Google GenAI image generation
+- `server/api/image/*.post.ts` — OpenAI + Google GenAI image generation (`server/utils/imageApiCommon.ts` for shared auth/helpers)
 - `server/api/text/*.post.ts` + `server/utils/promptAssistOpenAi.ts` — enhance / surprise prompt (OpenAI chat)
 - `docs/IMAGE_PIPELINE.md` — wiring guide
 - `docs/PERFORMANCE.md` — budgets and Core Web Vitals habits

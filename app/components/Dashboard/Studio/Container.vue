@@ -130,6 +130,18 @@
                             class="w-full"
                           />
                         </UFormField>
+                        <UFormField
+                          label="Thinking level"
+                          hint="Optional; uses Gemini thinking before image output when supported."
+                        >
+                          <USelect
+                            v-model="studio.nanobanana2ThinkingLevel"
+                            value-key="value"
+                            variant="outline"
+                            :items="nanobanana2ThinkingItems"
+                            class="w-full"
+                          />
+                        </UFormField>
                       </div>
                     </details>
                   </template>
@@ -448,7 +460,7 @@
 </template>
 
 <script setup lang="ts">
-import type { StudioProvider } from '~/stores/studio'
+import type { Nanobanana2ThinkingUi, StudioProvider } from '~/stores/studio'
 import {
   GEMINI_IMAGE_MODEL_IDS,
   OPENAI_IMAGE_MODEL_IDS,
@@ -566,6 +578,14 @@ const nanobanana2ResolutionItems = NANOBANANA2_IMAGE_SIZES.map((v) => ({
   label: v,
   value: v,
 }))
+
+const nanobanana2ThinkingItems: { label: string, value: Nanobanana2ThinkingUi }[] = [
+  { label: 'Default', value: 'default' },
+  { label: 'Minimal', value: 'minimal' },
+  { label: 'Low', value: 'low' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'High', value: 'high' },
+]
 
 const nanobananaProResolutionItems = NANOBANANA_PRO_IMAGE_SIZES.map((v) => ({
   label: v,

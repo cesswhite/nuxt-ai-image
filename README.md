@@ -61,7 +61,7 @@ server/
   api/text/
     enhance-prompt.post.ts
     surprise-prompt.post.ts
-  utils/generateImageShared.ts
+  utils/imageApiCommon.ts
   utils/promptAssistOpenAi.ts
 docs/
   DECISIONS.md

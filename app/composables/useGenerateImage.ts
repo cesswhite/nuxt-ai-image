@@ -60,16 +60,17 @@ export function useGenerateImage() {
         body = {
           prompt: studio.prompt,
           aspect_ratio: studio.aspectRatio,
-          nanobanana2: {
-            output_format: studio.nanobanana2OutputFormat,
-            temperature: studio.nanobanana2Temperature,
-            image_size: studio.nanobanana2ImageSize,
-            grounding_web: studio.nanobanana2GroundingWeb,
-            grounding_image_search: studio.nanobanana2GroundingImageSearch,
-            stop_sequences: parseStopSequencesFromRaw(studio.nanobanana2StopSequencesRaw),
-            max_output_tokens: studio.nanobanana2MaxOutputTokens,
-            top_p: studio.nanobanana2TopP,
-          },
+          output_format: studio.nanobanana2OutputFormat,
+          temperature: studio.nanobanana2Temperature,
+          image_size: studio.nanobanana2ImageSize,
+          grounding_web: studio.nanobanana2GroundingWeb,
+          grounding_image_search: studio.nanobanana2GroundingImageSearch,
+          stop_sequences: parseStopSequencesFromRaw(studio.nanobanana2StopSequencesRaw),
+          max_output_tokens: studio.nanobanana2MaxOutputTokens,
+          top_p: studio.nanobanana2TopP,
+          ...(studio.nanobanana2ThinkingLevel !== 'default'
+            ? { thinking_level: studio.nanobanana2ThinkingLevel }
+            : {}),
         }
       }
       else if (studio.provider === 'google-gemini' && model === GEMINI_3_PRO) {

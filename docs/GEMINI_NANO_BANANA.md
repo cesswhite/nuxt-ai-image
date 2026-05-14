@@ -6,7 +6,7 @@
 
 This template’s studio allowlist contains **exactly these three** API IDs (see `app/utils/studioImageModels.ts`): no other Gemini models are enabled for image generation here.
 
-The handler in `server/utils/generateImageShared.ts` is invoked by **`/api/image/*`** routes — **one model per path**. **Nanobanana 2** and **Nanobanana Pro** can pass **Google Search grounding**, resolution, temperature, and related options; **Nanobanana** (**2.5 Flash Image**) can pass **system instructions**, temperature, and advanced generation params — see routes and payloads in `docs/IMAGE_PIPELINE.md`. There is still **no** multi-image upload or chat session in the stock routes.
+Each **`/api/image/*`** route implements **one model**. **Nanobanana 2** (`gemini-3.1-flash-image-preview`) follows Google’s sample setup (image search tool, high thinking, image-only modalities); the body is **`prompt`** plus optional **`aspect_ratio`** / **`image_size`** — see `docs/IMAGE_PIPELINE.md`. **Nanobanana Pro** can pass **Google Search grounding**, resolution, temperature, and related options; **Nanobanana** (**2.5 Flash Image**) can pass **system instructions**, temperature, and advanced generation params. There is still **no** multi-image upload or chat session in the stock routes.
 
 ---
 

@@ -5,6 +5,10 @@
 
 export type Nanobanana2OutputFormat = 'text_and_image' | 'image_only'
 
+/** Maps to Gemini `thinkingConfig.thinkingLevel` when set (model must support thinking). */
+export const NANOBANANA2_THINKING_LEVELS = ['minimal', 'low', 'medium', 'high'] as const
+export type Nanobanana2ThinkingLevel = (typeof NANOBANANA2_THINKING_LEVELS)[number]
+
 export const NANOBANANA2_IMAGE_SIZES = ['512', '1K', '2K', '4K'] as const
 export type Nanobanana2ImageSize = (typeof NANOBANANA2_IMAGE_SIZES)[number]
 
@@ -17,6 +21,9 @@ export interface Nanobanana2RequestOptions {
   stop_sequences?: string[]
   max_output_tokens?: number
   top_p?: number
+  thinking_level?: Nanobanana2ThinkingLevel
+  /** When true/false, sets `thinkingConfig.includeThoughts` (API returns thought parts if supported). */
+  include_thoughts?: boolean
 }
 
 /** Default studio / API defaults (aligned with typical AI Studio snapshot). */
@@ -61,7 +68,15 @@ export function clampNanobanana2MaxOutputTokens(n: number | undefined): number {
   return Math.min(65_536, Math.max(1, Math.floor(n)))
 }
 
-/** Parse `body.nanobanana2` and merge with defaults for `gemini-3.1-flash-image-preview`. */
+function parseNanobanana2ThinkingLevel(raw: unknown): Nanobanana2ThinkingLevel | undefined {
+  if (typeof raw !== 'string') return undefined
+  const s = raw.trim().toLowerCase()
+  return (NANOBANANA2_THINKING_LEVELS as readonly string[]).includes(s)
+    ? (s as Nanobanana2ThinkingLevel)
+    : undefined
+}
+
+/** Parse flat POST fields for `gemini-3.1-flash-image-preview`. */
 export function resolveNanobanana2Request(raw: unknown): Nanobanana2RequestOptions {
   const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
 
@@ -97,5 +112,7 @@ export function resolveNanobanana2Request(raw: unknown): Nanobanana2RequestOptio
       typeof o.max_output_tokens === 'number' ? o.max_output_tokens : undefined,
     ),
     top_p: clampNanobanana2TopP(typeof o.top_p === 'number' ? o.top_p : undefined),
+    thinking_level: parseNanobanana2ThinkingLevel(o.thinking_level),
+    include_thoughts: typeof o.include_thoughts === 'boolean' ? o.include_thoughts : undefined,
   }
 }

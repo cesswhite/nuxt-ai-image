@@ -1,6 +1,6 @@
 # Image pipeline
 
-Image generation is split **one HTTP route per studio model** under **`/api/image/*`**. Shared logic lives in **`server/utils/generateImageShared.ts`**. URL slugs use **hyphens** instead of dots in Google model IDs (e.g. `gemini-3.1-…` → `gemini-3-1-…`). The client maps canonical model IDs to paths via **`app/utils/imageApiRoutes.ts`** (`postUrlForImageModel`). Allowed model IDs remain in **`app/utils/studioImageModels.ts`**.
+Image generation is split **one HTTP route per studio model** under **`/api/image/*`**. Each route file implements that model; tiny helpers live in **`server/utils/imageApiCommon.ts`**, **`server/utils/geminiImage.ts`**, **`server/utils/openAiImageSize.ts`**, etc. URL slugs use **hyphens** instead of dots in Google model IDs (e.g. `gemini-3.1-…` → `gemini-3-1-…`). The client maps canonical model IDs to paths via **`app/utils/imageApiRoutes.ts`** (`postUrlForImageModel`). Allowed model IDs remain in **`app/utils/studioImageModels.ts`**.
 
 ## Contract — `POST /api/image/…`
 
@@ -8,7 +8,7 @@ Image generation is split **one HTTP route per studio model** under **`/api/imag
 |-------|----------|------|
 | `POST /api/image/gpt-image-1-5` | `gpt-image-1.5` | `prompt` (required), `aspect_ratio?`, `openai_quality?` |
 | `POST /api/image/gpt-image-2` | `gpt-image-2` | `prompt` (required), `openai_size?`, `openai_quality?` |
-| `POST /api/image/gemini-3-1-flash-image-preview` | `gemini-3.1-flash-image-preview` | `prompt`, `aspect_ratio?`, `nanobanana2?` — see `app/utils/gemini31Nanobanana2.ts` |
+| `POST /api/image/gemini-3-1-flash-image-preview` | `gemini-3.1-flash-image-preview` | `prompt` (required), `aspect_ratio?` (default `21:9`), `image_size?` (`512` / `1K` / `2K` / `4K`, default `4K`). Uses Google sample-style config: image search tool, `thinkingLevel` high, `responseModalities: [IMAGE]` only. |
 | `POST /api/image/gemini-3-pro-image-preview` | `gemini-3-pro-image-preview` | `prompt`, `aspect_ratio?`, `nanobanana_pro?` — see `app/utils/geminiProNanobanana.ts` |
 | `POST /api/image/gemini-2-5-flash-image` | `gemini-2.5-flash-image` | `prompt`, `aspect_ratio?`, `nanobanana_25?` — see `app/utils/gemini25Nanobanana.ts` |
 

@@ -12,7 +12,7 @@ export const GPT_IMAGE_2_SIZE_ITEMS: { label: string, value: string }[] = [
 
 export const GPT_IMAGE_2_SIZE_VALUES = new Set(GPT_IMAGE_2_SIZE_ITEMS.map((i) => i.value))
 
-/** `gpt-image-1.5` — aspect presets map to standard GPT Image API sizes (legacy table / Image API). */
+/** `gpt-image-1.5` — aspect presets map to standard GPT Image API sizes. */
 export const GPT_IMAGE_15_ASPECT_ITEMS: { label: string, value: string }[] = [
   { label: '1:1 · 1024²', value: '1:1' },
   { label: '4:3 landscape · 1536×1024', value: '4:3' },

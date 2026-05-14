@@ -9,7 +9,7 @@
  * is easy to confuse with **`gemini-3.1-flash-image-preview`** (“-lite” vs “-flash-image-”).
  * Image-capable IDs use `…-image…` / `…-flash-image` (e.g. `gemini-2.5-flash-image`).
  *
- * Keep in sync with `server/api/image/*.post.ts`, `server/utils/generateImageShared.ts`, and `app/utils/geminiAspectRatios.ts`.
+ * Keep in sync with `server/api/image/*.post.ts` and `app/utils/geminiAspectRatios.ts`.
  */
 export const OPENAI_IMAGE_MODEL_IDS = ['gpt-image-1.5', 'gpt-image-2'] as const
 
