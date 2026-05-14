@@ -34,7 +34,7 @@ Uses the `openai` package: `images.generate` with `b64_json` → data URL.
 
 ## Google (Gemini native image)
 
-Uses `@google/genai`: `GoogleGenAI` → `models.generateContent` with `responseModalities: ['TEXT', 'IMAGE']` and `imageConfig` from **`buildGeminiImageConfig()`** in `app/utils/geminiAspectRatios.ts`: **`gemini-2.5-flash-image`** sends **aspect ratio only** (or **{}** when aspect is **Auto**); **Gemini 3.x** image models add **`imageSize: '1K'`**; **Nanobanana 2** / **Pro** / **Nanobanana** with **Auto** omit **`aspectRatio`** (model default).
+Uses `@google/genai`: `GoogleGenAI` → `models.generateContentStream` with `responseModalities: ['IMAGE']`, streaming until the final **`parts`** yield a **`inlineData`** image; **`imageConfig`** comes from **`buildGeminiImageConfig()`** in `app/utils/geminiAspectRatios.ts`: **`gemini-2.5-flash-image`** sends **aspect ratio only** (or **{}** when aspect is **Auto**); **Gemini 3.x** image models add **`imageSize`** (1K/2K/4K; **512** only on **3.1 Flash Image**); **Auto** aspect omits **`aspectRatio`** where supported (model default).
 
 **Model IDs:** Only **native image** Gemini models belong in the studio allowlist (`app/utils/studioImageModels.ts`). **Do not confuse** text-oriented Gemini 3 IDs with image models: **`gemini-3-flash-preview`**, **`gemini-3.1-pro-preview`**, **`gemini-3.1-flash-lite`** (text output; image generation not supported — [Gemini 3 guide](https://ai.google.dev/gemini-api/docs/gemini-3)). **`gemini-3.1-flash-lite`** is especially easy to mix up with **`gemini-3.1-flash-image-preview`**. These handlers use **`gemini-3.1-flash-image-preview`**, **`gemini-3-pro-image-preview`**, **`gemini-2.5-flash-image`**, etc.
 

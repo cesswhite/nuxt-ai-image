@@ -2,21 +2,26 @@ import { GoogleGenAI } from '@google/genai'
 import { createError, defineEventHandler, readBody } from 'h3'
 import { buildGeminiImageConfig } from '~/utils/geminiAspectRatios'
 import { resolveNanobananaProRequest } from '~/utils/geminiProNanobanana'
-import { promptFromBody, requireGeminiKey, asNestedRecord } from '../../utils/imageApiCommon'
+import { asNestedRecord, promptFromBody, requireGeminiKey } from '../../utils/imageApiCommon'
 import { dataUrlFromGeminiParts, geminiErrorMessage } from '../../utils/geminiImage'
 
+/** `gemini-3-pro-image-preview` — streaming + `imageConfig` + 1K/2K/4K, optional Search grounding and system instruction. */
 const MODEL = 'gemini-3-pro-image-preview' as const
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig(event)
-  const raw = await readBody(event).catch(() => ({}))
-  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+  const runtime = useRuntimeConfig(event)
+  requireGeminiKey(runtime)
 
-  requireGeminiKey(config)
+  const raw = await readBody(event).catch(() => ({}))
+  const o = raw && typeof raw === 'object' && !Array.isArray(raw)
+    ? (raw as Record<string, unknown>)
+    : {}
+
   const prompt = promptFromBody(o.prompt)
   if (!prompt) {
     throw createError({ statusCode: 400, message: 'prompt is required.' })
   }
+
   const aspectRatio = typeof o.aspect_ratio === 'string' && o.aspect_ratio.trim()
     ? o.aspect_ratio.trim()
     : '1:1'
@@ -25,35 +30,42 @@ export default defineEventHandler(async (event) => {
   const imageConfig = buildGeminiImageConfig(MODEL, aspectRatio, {
     gemini3ImageSize: nPro.image_size,
   })
+
   const tools = nPro.grounding_web ? [{ googleSearch: {} }] : undefined
 
   try {
-    const client = new GoogleGenAI({ apiKey: String(config.geminiApiKey).trim() })
-    const genConfig: Record<string, unknown> = {
-      responseModalities: ['TEXT', 'IMAGE'],
+    const ai = new GoogleGenAI({ apiKey: String(runtime.geminiApiKey).trim() })
+
+    const configPayload: Record<string, unknown> = {
+      responseModalities: ['IMAGE'],
       imageConfig,
       temperature: nPro.temperature,
       topP: nPro.top_p,
       maxOutputTokens: nPro.max_output_tokens,
     }
     if (nPro.stop_sequences?.length) {
-      genConfig.stopSequences = nPro.stop_sequences
+      configPayload.stopSequences = nPro.stop_sequences
     }
     if (nPro.system_instruction) {
-      genConfig.systemInstruction = nPro.system_instruction
+      configPayload.systemInstruction = nPro.system_instruction
     }
     if (tools?.length) {
-      genConfig.tools = tools
+      configPayload.tools = tools
     }
 
-    const response = await client.models.generateContent({
+    const stream = await ai.models.generateContentStream({
       model: MODEL,
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      config: genConfig,
-    } as never)
+      config: configPayload as never,
+    })
 
-    const parts = response.candidates?.[0]?.content?.parts
-    const output = dataUrlFromGeminiParts(parts as unknown[])
+    let lastParts: unknown[] | undefined
+    for await (const chunk of stream) {
+      const parts = chunk.candidates?.[0]?.content?.parts as unknown[] | undefined
+      if (parts?.length) lastParts = parts
+    }
+
+    const output = dataUrlFromGeminiParts(lastParts)
     if (!output) {
       throw createError({
         statusCode: 502,

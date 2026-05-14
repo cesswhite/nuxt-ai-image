@@ -54,7 +54,7 @@ This document explains **why** the template is structured the way it is, not onl
 
 ## Real provider calls in `server/api/image/*.post.ts`
 
-**Decision:** The shared module calls **OpenAI** (`openai` SDK, `images.generate`) or **Google GenAI** (`@google/genai`, `generateContent` with image output) from thin **`server/api/image/*`** handlers — one entry point per model. No placeholder or “demo only” branch.
+**Decision:** Image handlers call **OpenAI** (`openai` SDK, `images.generate`) or **Google GenAI** (`@google/genai`, `generateContentStream` with image output) from **`server/api/image/*`** — one route per model. No placeholder or “demo only” branch.
 
 **Why:** The studio should always reflect **real** billing, latency, and errors for the chosen vendor. Local development uses real keys in `.env` (or a stub backend you swap in yourself).
 
