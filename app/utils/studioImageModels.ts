@@ -1,4 +1,4 @@
-import type { StudioProvider } from '~/stores/studio'
+import type { StudioProvider } from '~/types/studio'
 
 /**
  * Allowed image model IDs per provider for studio / **`POST /api/image/*`** routes.
@@ -13,6 +13,14 @@ import type { StudioProvider } from '~/stores/studio'
  *
  * Keep in sync with `server/api/image/*.post.ts` and `app/utils/geminiAspectRatios.ts`.
  */
+type StudioImageModelDef = {
+  readonly key: string
+  readonly id: string
+  readonly label: string
+  readonly provider: StudioProvider
+  readonly icon?: string
+}
+
 const STUDIO_IMAGE_MODEL_REGISTRY = [
   {
     key: 'NANOBANANA2',
@@ -40,14 +48,16 @@ const STUDIO_IMAGE_MODEL_REGISTRY = [
     id: 'gpt-image-1.5',
     label: 'GPT Image 1.5',
     provider: 'openai',
+    icon: 'i-simple-icons-openai',
   },
   {
     key: 'GPT_IMAGE_2',
     id: 'gpt-image-2',
     label: 'GPT Image 2',
     provider: 'openai',
+    icon: 'i-simple-icons-openai',
   },
-] as const
+] as const satisfies readonly StudioImageModelDef[]
 
 type StudioImageModelRegistryEntry = (typeof STUDIO_IMAGE_MODEL_REGISTRY)[number]
 export type StudioImageModelKey = StudioImageModelRegistryEntry['key']
@@ -65,7 +75,7 @@ export const STUDIO_IMAGE_MODEL_LABELS: Record<StudioImageModelId, string> = Obj
   STUDIO_IMAGE_MODEL_REGISTRY.map((m) => [m.id, m.label]),
 ) as Record<StudioImageModelId, string>
 
-const STUDIO_IMAGE_MODEL_BY_ID = new Map(
+const STUDIO_IMAGE_MODEL_BY_ID = new Map<StudioImageModelId, StudioImageModelRegistryEntry>(
   STUDIO_IMAGE_MODEL_REGISTRY.map((m) => [m.id, m]),
 )
 
@@ -73,6 +83,11 @@ function modelIdsForProvider(provider: StudioProvider): StudioImageModelId[] {
   return STUDIO_IMAGE_MODEL_REGISTRY
     .filter((m) => m.provider === provider)
     .map((m) => m.id)
+}
+
+const ALLOWED_MODEL_IDS_BY_PROVIDER: Record<StudioProvider, ReadonlySet<string>> = {
+  'google-gemini': new Set(modelIdsForProvider('google-gemini')),
+  openai: new Set(modelIdsForProvider('openai')),
 }
 
 export const GEMINI_IMAGE_MODEL_IDS = modelIdsForProvider('google-gemini') as readonly GeminiImageModelId[]
@@ -116,16 +131,7 @@ export function studioModelIcon(
   provider: StudioProvider,
 ): string {
   const entry = STUDIO_IMAGE_MODEL_BY_ID.get(modelId as StudioImageModelId)
-  if (entry && 'icon' in entry && entry.icon) {
-    return entry.icon
-  }
-  return studioProviderIcon(provider)
-}
-
-export function imageModelIdsForProvider(
-  provider: StudioProvider,
-): readonly StudioImageModelId[] {
-  return modelIdsForProvider(provider)
+  return entry?.icon ?? studioProviderIcon(provider)
 }
 
 export function studioProviderSelectItems(
@@ -141,7 +147,7 @@ export function studioProviderSelectItems(
 export function studioModelSelectItems(
   provider: StudioProvider,
 ): StudioImageSelectItem[] {
-  return imageModelIdsForProvider(provider).map((id) => ({
+  return modelIdsForProvider(provider).map((id) => ({
     value: id,
     label: STUDIO_IMAGE_MODEL_LABELS[id],
     icon: studioModelIcon(id, provider),
@@ -160,6 +166,5 @@ export function isAllowedStudioModel(
   provider: StudioProvider,
   model: string,
 ): boolean {
-  const id = model.trim()
-  return imageModelIdsForProvider(provider).includes(id as StudioImageModelId)
+  return ALLOWED_MODEL_IDS_BY_PROVIDER[provider].has(model.trim())
 }

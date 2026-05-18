@@ -12,7 +12,9 @@ import {
 } from '~/utils/geminiProNanobanana'
 import { NANOBANANA_25_DEFAULTS } from '~/utils/gemini25Nanobanana'
 
-export type StudioProvider = 'openai' | 'google-gemini'
+import type { StudioProvider } from '~/types/studio'
+
+export type { StudioProvider }
 
 /** Studio-only: omit `thinking_level` in API body when `'default'`. */
 export type Nanobanana2ThinkingUi = 'default' | Nanobanana2ThinkingLevel
