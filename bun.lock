@@ -15,6 +15,10 @@
         "pinia": "3.0.4",
       },
       "devDependencies": {
+        "@iconify-json/hugeicons": "^1.2.28",
+        "@iconify-json/icon-park-outline": "^1.2.4",
+        "@iconify-json/simple-icons": "^1.2.82",
+        "@iconify-json/streamline-ultimate": "^1.2.2",
         "typescript": "6.0.3",
         "vue-tsc": "3.2.8",
       },
@@ -162,6 +166,14 @@
     "@floating-ui/vue": ["@floating-ui/vue@1.1.11", "", { "dependencies": { "@floating-ui/dom": "^1.7.6", "@floating-ui/utils": "^0.2.11", "vue-demi": ">=0.13.0" } }, "sha512-HzHKCNVxnGS35r9fCHBc3+uCnjw9IWIlCPL683cGgM9Kgj2BiAl8x1mS7vtvP6F9S/e/q4O6MApwSHj8hNLGfw=="],
 
     "@google/genai": ["@google/genai@2.0.1", "", { "dependencies": { "google-auth-library": "^10.3.0", "p-retry": "^4.6.2", "protobufjs": "^7.5.4", "ws": "^8.18.0" }, "peerDependencies": { "@modelcontextprotocol/sdk": "^1.25.2" }, "optionalPeers": ["@modelcontextprotocol/sdk"] }, "sha512-trxxbVePM9J8Cuni5x7+xvApoqb2y6Zk27/wugjT2cuwHOT78nFGdf/Ni29MkDxzWwrj90OQpno1Ana6dm3D2A=="],
+
+    "@iconify-json/hugeicons": ["@iconify-json/hugeicons@1.2.28", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-974r0jTel8JBjJhoEAnUEtEhNMmPek2WegAbdlpQaQp1cIJfcxl3fM8/bfPceMKtvbN8vBokaQqHeDgikGRl5w=="],
+
+    "@iconify-json/icon-park-outline": ["@iconify-json/icon-park-outline@1.2.4", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-NyZxXe2gD2TbTOyoRRMdtEJhr6i2KQCdDlYYoOn5oZLndQjwpIhw79hzeFhXvP38/o40D3gQ+l+IaSJgbB+0TQ=="],
+
+    "@iconify-json/simple-icons": ["@iconify-json/simple-icons@1.2.82", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-4p978qHx8eD/QBOhgBzp/p7uS3OO2KCnVpFPJTUvuhuDXv1Hr4RcxcZ5MWc6ptkf/3Dlb1xb23068OtPyx10mA=="],
+
+    "@iconify-json/streamline-ultimate": ["@iconify-json/streamline-ultimate@1.2.2", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-0Vz9UHgMrmRUYt3JFqm0E6PDdroItVqK4fKf3T72jVwS2MAmc8dcqvCy+f0hzOVzJfo3G34ejFA9Y8l/K44hTQ=="],
 
     "@iconify/collections": ["@iconify/collections@1.0.681", "", { "dependencies": { "@iconify/types": "*" } }, "sha512-R6XnljppXTHqHlKnoLig6r/Qj8WqOqce0+G1VVZGMJvo6gxpi0huLJ8vh+TudvF7cGJQco2ZBi3TMbDW3cFZFQ=="],
 

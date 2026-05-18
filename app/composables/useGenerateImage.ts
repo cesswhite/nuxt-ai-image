@@ -1,10 +1,7 @@
 import { isGptImage2Model } from '~/utils/openAiImagePresets'
 import { parseStopSequencesFromRaw } from '~/utils/gemini31Nanobanana2'
 import { postUrlForImageModel } from '~/utils/imageApiRoutes'
-
-const GEMINI_31 = 'gemini-3.1-flash-image-preview'
-const GEMINI_3_PRO = 'gemini-3-pro-image-preview'
-const GEMINI_25 = 'gemini-2.5-flash-image'
+import { STUDIO_IMAGE_MODEL } from '~/utils/studioImageModels'
 
 export interface GenerateImageResponse {
   output: string
@@ -29,21 +26,21 @@ export function useGenerateImage() {
 
       let body: Record<string, unknown>
 
-      if (studio.provider === 'openai' && model === 'gpt-image-1.5') {
+      if (studio.provider === 'openai' && model === STUDIO_IMAGE_MODEL.GPT_IMAGE_15) {
         body = {
           prompt: studio.prompt,
           aspect_ratio: studio.aspectRatio,
           openai_quality: studio.openAiQuality,
         }
       }
-      else if (studio.provider === 'openai' && model === 'gpt-image-2') {
+      else if (studio.provider === 'openai' && model === STUDIO_IMAGE_MODEL.GPT_IMAGE_2) {
         body = {
           prompt: studio.prompt,
           openai_size: studio.openAiGptImage2Size,
           openai_quality: studio.openAiQuality,
         }
       }
-      else if (studio.provider === 'google-gemini' && model === GEMINI_25) {
+      else if (studio.provider === 'google-gemini' && model === STUDIO_IMAGE_MODEL.NANOBANANA_25) {
         body = {
           prompt: studio.prompt,
           aspect_ratio: studio.aspectRatio,
@@ -56,7 +53,7 @@ export function useGenerateImage() {
           },
         }
       }
-      else if (studio.provider === 'google-gemini' && model === GEMINI_31) {
+      else if (studio.provider === 'google-gemini' && model === STUDIO_IMAGE_MODEL.NANOBANANA2) {
         body = {
           prompt: studio.prompt,
           aspect_ratio: studio.aspectRatio,
@@ -73,7 +70,7 @@ export function useGenerateImage() {
             : {}),
         }
       }
-      else if (studio.provider === 'google-gemini' && model === GEMINI_3_PRO) {
+      else if (studio.provider === 'google-gemini' && model === STUDIO_IMAGE_MODEL.NANOBANANA_PRO) {
         body = {
           prompt: studio.prompt,
           aspect_ratio: studio.aspectRatio,

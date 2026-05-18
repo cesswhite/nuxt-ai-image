@@ -47,7 +47,7 @@ export default defineAppConfig({
       variants: {
         variant: {
           subtle: {
-            root: 'bg-elevated/50 ring ring-default/70 shadow-sm divide-none rounded-lg',
+            root: 'bg-elevated ring ring-default/70 shadow-sm divide-none rounded-lg',
           },
         },
       },
@@ -61,6 +61,10 @@ export default defineAppConfig({
       },
     },
     select: {
+      slots: {
+        item: 'cursor-pointer data-disabled:cursor-not-allowed',
+        itemTrailingIcon: '!size-3 shrink-0 text-primary-500 dark:text-primary-400 mt-0.5',
+      },
       variants: {
         variant: {
           outline:
@@ -69,6 +73,10 @@ export default defineAppConfig({
       },
     },
     selectMenu: {
+      slots: {
+        item: 'cursor-pointer data-disabled:cursor-not-allowed',
+        itemTrailingIcon: '!size-3 shrink-0 text-primary-500 dark:text-primary-400',
+      },
       variants: {
         variant: {
           outline:
@@ -83,16 +91,6 @@ export default defineAppConfig({
             'text-highlighted bg-default ring ring-accented/70 shadow-sm shadow-dark-500/10 hover:bg-elevated/60 disabled:bg-default cursor-pointer rounded-lg',
         },
       },
-    },
-    /**
-     * Default Nuxt UI uses `fixed inset-0` — too aggressive inside `UApp`.
-     * `UDashboardGroup` scopes dashboard context for `UDashboardPanel` / `UDashboardNavbar` / toggle.
-     */
-    dashboardGroup: {
-      base: 'relative flex min-h-svh min-w-0 w-full flex-1 overflow-hidden',
-    },
-    dashboardNavbar: {
-      root: 'border-b border-default bg-default/90 backdrop-blur-md',
     },
   },
 })

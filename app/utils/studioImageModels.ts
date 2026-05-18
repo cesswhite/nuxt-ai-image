@@ -1,3 +1,5 @@
+import type { StudioProvider } from '~/stores/studio'
+
 /**
  * Allowed image model IDs per provider for studio / **`POST /api/image/*`** routes.
  *
@@ -11,47 +13,153 @@
  *
  * Keep in sync with `server/api/image/*.post.ts` and `app/utils/geminiAspectRatios.ts`.
  */
-export const OPENAI_IMAGE_MODEL_IDS = ['gpt-image-1.5', 'gpt-image-2'] as const
-
-export const GEMINI_IMAGE_MODEL_IDS = [
-  /** Nanobanana 2 — Gemini 3.1 Flash Image Preview. Not `gemini-3.1-flash-lite` (text). */
-  'gemini-3.1-flash-image-preview',
-  'gemini-3-pro-image-preview',
-  'gemini-2.5-flash-image',
+const STUDIO_IMAGE_MODEL_REGISTRY = [
+  {
+    key: 'NANOBANANA2',
+    id: 'gemini-3.1-flash-image-preview',
+    label: 'Nanobanana 2',
+    provider: 'google-gemini',
+    icon: 'i-icon-park-outline-banana',
+  },
+  {
+    key: 'NANOBANANA_PRO',
+    id: 'gemini-3-pro-image-preview',
+    label: 'Nanobanana Pro',
+    provider: 'google-gemini',
+    icon: 'i-hugeicons-banana',
+  },
+  {
+    key: 'NANOBANANA_25',
+    id: 'gemini-2.5-flash-image',
+    label: 'Nanobanana',
+    provider: 'google-gemini',
+    icon: 'i-streamline-ultimate-fruit-banana',
+  },
+  {
+    key: 'GPT_IMAGE_15',
+    id: 'gpt-image-1.5',
+    label: 'GPT Image 1.5',
+    provider: 'openai',
+  },
+  {
+    key: 'GPT_IMAGE_2',
+    id: 'gpt-image-2',
+    label: 'GPT Image 2',
+    provider: 'openai',
+  },
 ] as const
 
-export type OpenAIImageModelId = (typeof OPENAI_IMAGE_MODEL_IDS)[number]
-export type GeminiImageModelId = (typeof GEMINI_IMAGE_MODEL_IDS)[number]
+type StudioImageModelRegistryEntry = (typeof STUDIO_IMAGE_MODEL_REGISTRY)[number]
+export type StudioImageModelKey = StudioImageModelRegistryEntry['key']
+export type StudioImageModelId = StudioImageModelRegistryEntry['id']
+export type GeminiImageModelId = Extract<StudioImageModelRegistryEntry, { provider: 'google-gemini' }>['id']
+export type OpenAIImageModelId = Extract<StudioImageModelRegistryEntry, { provider: 'openai' }>['id']
 
-/** UI labels (aliases); API still uses the model IDs as `value`. */
-export const STUDIO_IMAGE_MODEL_LABELS: Record<string, string> = {
-  'gpt-image-1.5': 'GPT Image 1.5',
-  'gpt-image-2': 'GPT Image 2',
-  'gemini-2.5-flash-image': 'Nanobanana',
-  'gemini-3-pro-image-preview': 'Nanobanana Pro',
-  'gemini-3.1-flash-image-preview': 'Nanobanana 2',
+/** Canonical model IDs for studio UI and generate body branching. */
+export const STUDIO_IMAGE_MODEL = Object.fromEntries(
+  STUDIO_IMAGE_MODEL_REGISTRY.map((m) => [m.key, m.id]),
+) as { readonly [K in StudioImageModelKey]: Extract<StudioImageModelRegistryEntry, { key: K }>['id'] }
+
+/** UI labels; API still uses `id` as `value`. */
+export const STUDIO_IMAGE_MODEL_LABELS: Record<StudioImageModelId, string> = Object.fromEntries(
+  STUDIO_IMAGE_MODEL_REGISTRY.map((m) => [m.id, m.label]),
+) as Record<StudioImageModelId, string>
+
+const STUDIO_IMAGE_MODEL_BY_ID = new Map(
+  STUDIO_IMAGE_MODEL_REGISTRY.map((m) => [m.id, m]),
+)
+
+function modelIdsForProvider(provider: StudioProvider): StudioImageModelId[] {
+  return STUDIO_IMAGE_MODEL_REGISTRY
+    .filter((m) => m.provider === provider)
+    .map((m) => m.id)
 }
 
-export function studioModelSelectItems(
-  ids: readonly string[],
-): { label: string, value: string }[] {
-  return ids.map((id) => ({
-    value: id,
-    label: STUDIO_IMAGE_MODEL_LABELS[id] ?? id,
+export const GEMINI_IMAGE_MODEL_IDS = modelIdsForProvider('google-gemini') as readonly GeminiImageModelId[]
+export const OPENAI_IMAGE_MODEL_IDS = modelIdsForProvider('openai') as readonly OpenAIImageModelId[]
+
+/** Nuxt Icon names (`i-{collection}-{icon}`). Requires matching `@iconify-json/*` packages. */
+export const STUDIO_PROVIDER_ICONS: Record<StudioProvider, string> = {
+  'google-gemini': 'i-simple-icons-googlegemini',
+  openai: 'i-simple-icons-openai',
+}
+
+export type StudioImageSelectItem = {
+  label: string
+  value: string
+  icon: string
+}
+
+export type StudioProviderMenuVariant = 'composer' | 'sidebar'
+
+const STUDIO_PROVIDER_LABELS: Record<
+  StudioProviderMenuVariant,
+  Record<StudioProvider, string>
+> = {
+  composer: {
+    'google-gemini': 'Gemini',
+    openai: 'GPT Image',
+  },
+  sidebar: {
+    'google-gemini': 'Google - Gemini',
+    openai: 'OpenAI - GPT',
+  },
+}
+
+export function studioProviderIcon(provider: StudioProvider): string {
+  return STUDIO_PROVIDER_ICONS[provider]
+}
+
+/** Per-model icon when defined in the registry; otherwise the provider icon. */
+export function studioModelIcon(
+  modelId: string,
+  provider: StudioProvider,
+): string {
+  const entry = STUDIO_IMAGE_MODEL_BY_ID.get(modelId as StudioImageModelId)
+  if (entry && 'icon' in entry && entry.icon) {
+    return entry.icon
+  }
+  return studioProviderIcon(provider)
+}
+
+export function imageModelIdsForProvider(
+  provider: StudioProvider,
+): readonly StudioImageModelId[] {
+  return modelIdsForProvider(provider)
+}
+
+export function studioProviderSelectItems(
+  variant: StudioProviderMenuVariant = 'composer',
+): StudioImageSelectItem[] {
+  return (Object.keys(STUDIO_PROVIDER_ICONS) as StudioProvider[]).map((provider) => ({
+    value: provider,
+    label: STUDIO_PROVIDER_LABELS[variant][provider],
+    icon: studioProviderIcon(provider),
   }))
 }
 
-export function defaultModelForProvider(provider: 'openai' | 'google-gemini'): string {
-  return provider === 'openai' ? 'gpt-image-1.5' : 'gemini-3.1-flash-image-preview'
+export function studioModelSelectItems(
+  provider: StudioProvider,
+): StudioImageSelectItem[] {
+  return imageModelIdsForProvider(provider).map((id) => ({
+    value: id,
+    label: STUDIO_IMAGE_MODEL_LABELS[id],
+    icon: studioModelIcon(id, provider),
+  }))
+}
+
+export function defaultModelForProvider(provider: StudioProvider): StudioImageModelId {
+  const entry = STUDIO_IMAGE_MODEL_REGISTRY.find((m) => m.provider === provider)
+  if (!entry) {
+    throw new Error(`No default image model for provider "${provider}".`)
+  }
+  return entry.id
 }
 
 export function isAllowedStudioModel(
-  provider: 'openai' | 'google-gemini',
+  provider: StudioProvider,
   model: string,
 ): boolean {
   const id = model.trim()
-  if (provider === 'openai') {
-    return (OPENAI_IMAGE_MODEL_IDS as readonly string[]).includes(id)
-  }
-  return (GEMINI_IMAGE_MODEL_IDS as readonly string[]).includes(id)
+  return imageModelIdsForProvider(provider).includes(id as StudioImageModelId)
 }

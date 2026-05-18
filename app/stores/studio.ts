@@ -35,8 +35,8 @@ export const useStudioStore = defineStore('studio', {
     nanobanana2GroundingImageSearch: NANOBANANA2_DEFAULTS.groundingImageSearch,
     /** Split into `stop_sequences` on send (newline / comma / pipe). */
     nanobanana2StopSequencesRaw: NANOBANANA2_DEFAULTS.stopSequencesRaw,
-    nanobanana2MaxOutputTokens: NANOBANANA2_DEFAULTS.maxOutputTokens,
-    nanobanana2TopP: NANOBANANA2_DEFAULTS.topP,
+    nanobanana2MaxOutputTokens: NANOBANANA2_DEFAULTS.maxOutputTokens as number,
+    nanobanana2TopP: NANOBANANA2_DEFAULTS.topP as number,
     /** When not `default`, sends flat `thinking_level` on the Gemini 3.1 image POST body. */
     nanobanana2ThinkingLevel: 'default' as Nanobanana2ThinkingUi,
     /** Nanobanana Pro — `gemini-3-pro-image-preview` (AI Studio run settings). */
@@ -45,14 +45,14 @@ export const useStudioStore = defineStore('studio', {
     nanobananaProImageSize: NANOBANANA_PRO_DEFAULTS.imageSize as NanobananaProImageSize,
     nanobananaProGroundingWeb: NANOBANANA_PRO_DEFAULTS.groundingWeb,
     nanobananaProStopSequencesRaw: NANOBANANA_PRO_DEFAULTS.stopSequencesRaw,
-    nanobananaProMaxOutputTokens: NANOBANANA_PRO_DEFAULTS.maxOutputTokens,
-    nanobananaProTopP: NANOBANANA_PRO_DEFAULTS.topP,
+    nanobananaProMaxOutputTokens: NANOBANANA_PRO_DEFAULTS.maxOutputTokens as number,
+    nanobananaProTopP: NANOBANANA_PRO_DEFAULTS.topP as number,
     /** Nanobanana — `gemini-2.5-flash-image` (AI Studio: no resolution / grounding). */
     nanobanana25SystemInstruction: NANOBANANA_25_DEFAULTS.systemInstruction,
     nanobanana25Temperature: NANOBANANA_25_DEFAULTS.temperature,
     nanobanana25StopSequencesRaw: NANOBANANA_25_DEFAULTS.stopSequencesRaw,
-    nanobanana25MaxOutputTokens: NANOBANANA_25_DEFAULTS.maxOutputTokens,
-    nanobanana25TopP: NANOBANANA_25_DEFAULTS.topP,
+    nanobanana25MaxOutputTokens: NANOBANANA_25_DEFAULTS.maxOutputTokens as number,
+    nanobanana25TopP: NANOBANANA_25_DEFAULTS.topP as number,
     lastOutput: '' as string,
     loading: false,
     loadingGpt: false,

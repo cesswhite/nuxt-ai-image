@@ -55,12 +55,16 @@ export function normalizeNanobanana2ImageSize(raw: string | undefined): Nanobana
 
 export function clampNanobanana2Temperature(n: number | undefined): number {
   if (typeof n !== 'number' || Number.isNaN(n)) return NANOBANANA2_DEFAULTS.temperature
-  return Math.min(2, Math.max(0, n))
+  return Math.min(1, Math.max(0, n))
 }
+
+/** Top P slider: 0–1 in steps of 0.05 (AI Studio–style granularity). */
+export const NANOBANANA2_TOP_P_STEP = 0.05
 
 export function clampNanobanana2TopP(n: number | undefined): number {
   if (typeof n !== 'number' || Number.isNaN(n)) return NANOBANANA2_DEFAULTS.topP
-  return Math.min(1, Math.max(0, n))
+  const clamped = Math.min(1, Math.max(0, n))
+  return Math.round(clamped / NANOBANANA2_TOP_P_STEP) * NANOBANANA2_TOP_P_STEP
 }
 
 export function clampNanobanana2MaxOutputTokens(n: number | undefined): number {
