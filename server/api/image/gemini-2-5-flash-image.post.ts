@@ -6,6 +6,7 @@ import {
   optionalNestedRecord,
   promptFromBody,
   readJsonBody,
+  referenceImageDataUrlsFromBody,
   requireGeminiKey,
 } from '../../utils/imageApiCommon'
 import { generateGeminiImageFromStream, rethrowGeminiImageError } from '../../utils/geminiImage'
@@ -46,6 +47,7 @@ export default defineEventHandler(async (event) => {
       model: MODEL,
       prompt,
       config: configPayload,
+      referenceImageDataUrls: referenceImageDataUrlsFromBody(body, MODEL),
     })
   }
   catch (e: unknown) {

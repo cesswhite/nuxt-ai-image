@@ -3,7 +3,24 @@
  */
 import { GoogleGenAI } from '@google/genai'
 import { createError } from 'h3'
+import { parseImageDataUrl } from '~/utils/studioImageOutput'
 import type { ImageGenResult } from './imageApiCommon'
+
+type GeminiContentPart =
+  | { text: string }
+  | { inlineData: { mimeType: string, data: string } }
+
+function buildGeminiUserParts(prompt: string, referenceImageDataUrls: string[] = []): GeminiContentPart[] {
+  const parts: GeminiContentPart[] = []
+  for (const dataUrl of referenceImageDataUrls) {
+    const parsed = parseImageDataUrl(dataUrl)
+    if (parsed) {
+      parts.push({ inlineData: { mimeType: parsed.mimeType, data: parsed.data } })
+    }
+  }
+  parts.push({ text: prompt })
+  return parts
+}
 
 export function dataUrlFromGeminiParts(partsOut: unknown[] | undefined): string | null {
   if (!partsOut?.length) return null
@@ -70,11 +87,15 @@ export async function generateGeminiImageFromStream(params: {
   model: string
   prompt: string
   config: Record<string, unknown>
+  referenceImageDataUrls?: string[]
 }): Promise<ImageGenResult> {
   const ai = new GoogleGenAI({ apiKey: params.apiKey.trim() })
   const stream = await ai.models.generateContentStream({
     model: params.model,
-    contents: [{ role: 'user', parts: [{ text: params.prompt }] }],
+    contents: [{
+      role: 'user',
+      parts: buildGeminiUserParts(params.prompt, params.referenceImageDataUrls ?? []),
+    }],
     config: params.config as never,
   })
   const lastParts = await collectGeminiStreamParts(stream)

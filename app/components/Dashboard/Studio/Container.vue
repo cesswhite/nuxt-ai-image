@@ -1,6 +1,7 @@
 <template>
-  <div class="h-screen w-full relative">
+  <div class="relative h-screen w-full overflow-hidden">
+    <DashboardStudioPreviewPanel class="absolute inset-0" />
+    <DashboardStudioTopPanel />
     <DashboardStudioBottomPanel />
-    <DashboardStudioPreviewPanel />
   </div>
 </template>

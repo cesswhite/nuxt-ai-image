@@ -1,22 +1,16 @@
 <template>
   <div
-    class="pointer-events-none fixed bottom-0 left-1/2 z-20 flex w-[min(96vw,42rem)] -translate-x-1/2 flex-col items-center gap-1.5 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-    <UCard
-      v-if="!collapsed"
-      id="studio-composer-panel"
-      variant="subtle"
-      :ui="{
-        root: 'rounded-xl',
-        body: 'p-2 sm:p-2 mt-0',
-      }"
-      class="pointer-events-auto w-full"
-    >
+    class="pointer-events-none fixed bottom-2 left-1/2 z-20 flex w-auto -translate-x-1/2 flex-col items-center gap-1.5 px-2">
+    <UCard v-show="!collapsed" id="studio-composer-panel" variant="subtle" :ui="{
+      root: 'rounded-xl',
+      body: 'p-1.5 sm:p-1.5 mt-0',
+    }" class="pointer-events-auto w-full">
       <div class="flex flex-col gap-3">
         <div class="mb-1 w-full">
           <DashboardStudioPromptComposer ref="promptComposerRef" />
         </div>
         <div class="flex items-center justify-between gap-2">
-          <div v-memo="[controlsMemoKey]" class="flex flex-col justify-start gap-2 px-1.5">
+          <div class="flex flex-col justify-start gap-2 px-1.5">
             <span class="text-xxs text-dark-950/30 dark:text-dark-50/30">
               Provider & Model
             </span>
@@ -34,7 +28,7 @@
             <span class="text-xxs text-dark-950/30 dark:text-dark-50/30">
               Configuration
             </span>
-            <div class="flex items-center justify-start gap-2">
+            <div class="flex items-center justify-start gap-x-1.5">
               <DashboardStudioFieldDropdown v-if="studio.provider === 'google-gemini' && isNanobanana2"
                 v-model="studio.aspectRatio" :items="geminiAspectItems" :disabled="studio.loading" placeholder="Ratio…"
                 :tooltip="aspectTooltip" :block="false" button-class="" />
@@ -58,18 +52,9 @@
     </UCard>
 
     <div class="pointer-events-auto flex justify-center">
-      <UButton
-        variant="soft"
-        color="neutral"
-        size="md"
-        class="cursor-pointer"
-        :icon="collapsed ? 'i-lucide-chevrons-up' : 'i-lucide-chevrons-down'"
-        :label="collapsed ? 'Expand' : 'Collapse'"
-        :loading="studio.loading"
-        aria-controls="studio-composer-panel"
-        :aria-expanded="!collapsed"
-        @click="collapsed = !collapsed"
-      />
+      <UButton variant="soft" color="neutral" size="md" class="cursor-pointer" :icon="toggleIcon"
+        :loading="studio.loading" :disabled="studio.loading" aria-controls="studio-composer-panel"
+        :aria-expanded="!collapsed" @click="onToggleCollapsed" />
     </div>
   </div>
 </template>
@@ -85,6 +70,34 @@ import { geminiAspectSelectItemsForModel } from '~/utils/geminiImageUtils'
 const studio = useStudioStore()
 const collapsed = ref(false)
 const promptComposerRef = ref<{ flushToStore: () => void } | null>(null)
+
+const toggleLabel = computed(() => {
+  if (studio.loading) return 'Generating image'
+  if (collapsed.value) return 'Expand'
+  return 'Collapse'
+})
+
+const toggleIcon = computed(() => {
+  if (studio.loading) return undefined
+  return collapsed.value ? 'i-lucide-maximize' : 'i-lucide-minimize'
+})
+
+watch(
+  () => studio.loading,
+  (loading, wasLoading) => {
+    if (loading) {
+      collapsed.value = true
+    }
+    else if (wasLoading) {
+      collapsed.value = false
+    }
+  },
+)
+
+function onToggleCollapsed() {
+  if (studio.loading) return
+  collapsed.value = !collapsed.value
+}
 
 const { generate } = useGenerateImage()
 

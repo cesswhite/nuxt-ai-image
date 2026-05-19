@@ -11,6 +11,12 @@ import {
   type NanobananaProImageSize,
 } from '~/utils/geminiProNanobanana'
 import { NANOBANANA_25_DEFAULTS } from '~/utils/gemini25Nanobanana'
+import {
+  maxReferenceImagesForModel,
+  supportsReferenceImages,
+  trimReferenceImagesForModel,
+  validateReferenceDataUrl,
+} from '~/utils/studioReferenceImages'
 
 import type { StudioProvider } from '~/types/studio'
 
@@ -56,6 +62,8 @@ export const useStudioStore = defineStore('studio', {
     nanobanana25MaxOutputTokens: NANOBANANA_25_DEFAULTS.maxOutputTokens as number,
     nanobanana25TopP: NANOBANANA_25_DEFAULTS.topP as number,
     lastOutput: '' as string,
+    /** Gemini reference images (data URLs) sent on the next generate. */
+    referenceImages: [] as string[],
     loading: false,
     loadingGpt: false,
     loadingSurprise: false,
@@ -79,6 +87,41 @@ export const useStudioStore = defineStore('studio', {
     },
     setOutput(url: string) {
       this.lastOutput = url
+    },
+    addReferenceImages(urls: string[]) {
+      if (!supportsReferenceImages(this.model)) return 0
+      const max = maxReferenceImagesForModel(this.model)
+      let added = 0
+      for (const raw of urls) {
+        if (this.referenceImages.length >= max) break
+        const url = raw.trim()
+        if (!url) continue
+        const check = validateReferenceDataUrl(url)
+        if (!check.ok) continue
+        if (this.referenceImages.includes(url)) continue
+        this.referenceImages.push(url)
+        added++
+      }
+      return added
+    },
+    removeReferenceImage(index: number) {
+      if (index < 0 || index >= this.referenceImages.length) return
+      this.referenceImages.splice(index, 1)
+    },
+    clearReferenceImages() {
+      this.referenceImages = []
+    },
+    trimReferenceImagesToModel() {
+      this.referenceImages = trimReferenceImagesForModel(this.referenceImages, this.model)
+    },
+    attachReferenceFromOutput() {
+      if (!this.lastOutput.trim()) return false
+      return this.addReferenceImages([this.lastOutput]) > 0
+    },
+    clearGeneration() {
+      this.lastOutput = ''
+      this.error = null
+      this.clearReferenceImages()
     },
   },
 })

@@ -13,6 +13,13 @@ export function useGenerateImage() {
   const studio = useStudioStore()
   const toast = useToast()
 
+  function geminiReferenceFields(): Record<string, unknown> {
+    if (studio.provider !== 'google-gemini' || studio.referenceImages.length === 0) {
+      return {}
+    }
+    return { reference_image_data_urls: [...studio.referenceImages] }
+  }
+
   async function generate() {
     if (!studio.prompt.trim()) {
       toast.add({ title: 'Add a prompt', color: 'warning' })
@@ -44,6 +51,7 @@ export function useGenerateImage() {
         body = {
           prompt: studio.prompt,
           aspect_ratio: studio.aspectRatio,
+          ...geminiReferenceFields(),
           nanobanana_25: {
             system_instruction: studio.nanobanana25SystemInstruction.trim() || undefined,
             temperature: studio.nanobanana25Temperature,
@@ -57,6 +65,7 @@ export function useGenerateImage() {
         body = {
           prompt: studio.prompt,
           aspect_ratio: studio.aspectRatio,
+          ...geminiReferenceFields(),
           output_format: studio.nanobanana2OutputFormat,
           temperature: studio.nanobanana2Temperature,
           image_size: studio.nanobanana2ImageSize,
@@ -74,6 +83,7 @@ export function useGenerateImage() {
         body = {
           prompt: studio.prompt,
           aspect_ratio: studio.aspectRatio,
+          ...geminiReferenceFields(),
           nanobanana_pro: {
             system_instruction: studio.nanobananaProSystemInstruction.trim() || undefined,
             temperature: studio.nanobananaProTemperature,

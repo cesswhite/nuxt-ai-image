@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center justify-start gap-2">
+  <div class="flex items-center justify-start gap-x-1.5">
     <DashboardStudioFieldDropdown v-model="studio.nanobanana2OutputFormat" :items="formatItems"
       :disabled="studio.loading" icon="i-lucide-gallery-horizontal" placeholder="Output format…"
       :tooltip="formatTooltip" />

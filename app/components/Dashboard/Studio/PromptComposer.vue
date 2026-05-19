@@ -1,23 +1,110 @@
 <template>
   <div class="flex flex-col gap-1">
-    <UTextarea v-model="draft" variant="outline" :rows="5" :maxlength="maxLength"
+    <UTextarea
+      v-model="draft"
+      variant="outline"
+      :rows="5"
+      :maxlength="maxLength"
       placeholder="Describe your image: subject, setting, lighting, style…"
-      class="w-full bg-transparent disabled:opacity-50" :disabled="busy" :ui="textareaUi" @blur="flushToStore"
-      size="xs" />
+      class="w-full bg-transparent disabled:opacity-50"
+      :disabled="busy"
+      :ui="textareaUi"
+      size="xs"
+      @blur="flushToStore"
+    />
+
+    <div
+      v-if="referenceImages.length > 0"
+      class="scrollbar-hide flex gap-1.5 overflow-x-auto px-1.5"
+    >
+      <div
+        v-for="(url, index) in referenceImages"
+        :key="`${index}-${url.slice(0, 32)}`"
+        class="group relative shrink-0"
+      >
+        <img
+          :src="url"
+          alt=""
+          class="size-10 rounded-md object-cover ring-1 ring-default"
+          width="40"
+          height="40"
+          loading="lazy"
+          decoding="async"
+        >
+        <UButton
+          type="button"
+          color="neutral"
+          variant="solid"
+          size="xs"
+          square
+          icon="i-lucide-x"
+          class="absolute -end-1 -top-1 size-4 cursor-pointer opacity-0 transition-opacity group-hover:opacity-100"
+          :aria-label="`Remove reference ${index + 1}`"
+          @click="studio.removeReferenceImage(index)"
+        />
+      </div>
+    </div>
+
+    <input
+      ref="fileInputRef"
+      type="file"
+      class="hidden"
+      :accept="accept"
+      multiple
+      @change="onReferenceFilesChange"
+    >
+
     <div class="flex w-full items-center justify-between gap-2 px-1.5">
-      <span class=" select-none text-xxs tabular-nums" :class="counterToneClass">
+      <span class="select-none text-xxs tabular-nums" :class="counterToneClass">
         {{ charCount }}/{{ maxLength }}
+        <span v-if="referenceImages.length > 0" class="text-dimmed">
+          · {{ referenceImages.length }}/{{ referenceLimit }} ref
+        </span>
       </span>
-      <div class="flex items-center gap-1 ">
-        <UTooltip text="Enhance prompt" :content="{ side: 'top' }" :delay-duration="0" size="xs">
-          <UButton type="button" variant="subtle" color="neutral" size="xs" square icon="i-lucide-sparkles"
-            class="cursor-pointer" :disabled="busy || !canEnhance" :loading="loadingGpt" aria-label="Enhance prompt"
-            @click="onEnhance" />
+      <div class="flex items-center gap-1">
+        <UTooltip :text="addImagesTooltip" :content="{ side: 'top' }" :delay-duration="0">
+          <UButton
+            type="button"
+            variant="subtle"
+            color="neutral"
+            size="xs"
+            square
+            icon="i-lucide-images"
+            class="cursor-pointer"
+            :disabled="busy || !canAdd"
+            :aria-label="addImagesTooltip"
+            @click="openReferencePicker"
+          />
+        </UTooltip>
+        <UTooltip text="Enhance prompt" :content="{ side: 'top' }" :delay-duration="0">
+          <UButton
+            type="button"
+            variant="subtle"
+            color="neutral"
+            size="xs"
+            square
+            icon="i-lucide-sparkles"
+            class="cursor-pointer"
+            :disabled="busy || !canEnhance"
+            :loading="loadingGpt"
+            aria-label="Enhance prompt"
+            @click="onEnhance"
+          />
         </UTooltip>
         <UTooltip text="Surprise prompt" :content="{ side: 'top' }" :delay-duration="0">
-          <UButton type="button" variant="subtle" color="neutral" size="xs" square icon="i-lucide-wand-2"
-            class="cursor-pointer" :disabled="busy" :loading="loadingSurprise"
-            aria-label="Surprise me with a random prompt" @click="onSurprise" />
+          <UButton
+            type="button"
+            variant="subtle"
+            color="neutral"
+            size="xs"
+            square
+            icon="i-lucide-wand-2"
+            class="cursor-pointer"
+            :disabled="busy"
+            :loading="loadingSurprise"
+            aria-label="Surprise me with a random prompt"
+            @click="onSurprise"
+          />
         </UTooltip>
       </div>
     </div>
@@ -35,8 +122,17 @@ const textareaUi = {
 } as const
 
 const studio = useStudioStore()
-const { loading, loadingGpt, loadingSurprise } = storeToRefs(studio)
+const { loading, loadingGpt, loadingSurprise, referenceImages } = storeToRefs(studio)
+const { handleEnhancePrompt, handleSurprisePrompt } = useStudioPromptAssist()
+const {
+  limit: referenceLimit,
+  canAdd,
+  accept,
+  addImagesTooltip,
+  addFilesFromInput,
+} = useStudioReferenceImages()
 
+const fileInputRef = ref<HTMLInputElement | null>(null)
 const draft = ref(studio.prompt)
 const charCount = computed(() => draft.value.length)
 
@@ -48,8 +144,6 @@ const counterToneClass = computed(() => {
 })
 const busy = computed(() => loading.value || loadingGpt.value || loadingSurprise.value)
 const canEnhance = computed(() => draft.value.trim().length > 0)
-
-const { handleEnhancePrompt, handleSurprisePrompt } = useStudioPromptAssist()
 
 let syncTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -68,11 +162,20 @@ function scheduleSyncToStore() {
   syncTimer = setTimeout(flushToStore, 120)
 }
 
+function openReferencePicker() {
+  fileInputRef.value?.click()
+}
+
+function onReferenceFilesChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  void addFilesFromInput(input.files)
+  input.value = ''
+}
+
 watch(draft, () => {
   scheduleSyncToStore()
 })
 
-/** External updates (enhance / surprise / reset). */
 watch(
   () => studio.prompt,
   (next) => {
@@ -95,6 +198,5 @@ onBeforeUnmount(() => {
   if (syncTimer) clearTimeout(syncTimer)
 })
 
-/** Call before generate so the store has the latest text. */
 defineExpose({ flushToStore })
 </script>

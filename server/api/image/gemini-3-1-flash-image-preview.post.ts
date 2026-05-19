@@ -4,6 +4,7 @@ import {
   aspectRatioFromBody,
   promptFromBody,
   readJsonBody,
+  referenceImageDataUrlsFromBody,
   requireGeminiKey,
 } from '../../utils/imageApiCommon'
 import { generateGeminiImageFromStream, rethrowGeminiImageError } from '../../utils/geminiImage'
@@ -31,6 +32,7 @@ export default defineEventHandler(async (event) => {
       model: MODEL,
       prompt,
       config,
+      referenceImageDataUrls: referenceImageDataUrlsFromBody(body, MODEL),
     })
   }
   catch (e: unknown) {

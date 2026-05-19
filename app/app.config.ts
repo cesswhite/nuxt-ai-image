@@ -72,6 +72,11 @@ export default defineAppConfig({
         },
       },
     },
+    dropdownMenu: {
+      slots: {
+        item: 'cursor-pointer data-disabled:cursor-not-allowed',
+      },
+    },
     selectMenu: {
       slots: {
         item: 'cursor-pointer data-disabled:cursor-not-allowed',

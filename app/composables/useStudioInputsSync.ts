@@ -7,10 +7,12 @@ import {
   isAllowedStudioModel,
   STUDIO_IMAGE_MODEL,
 } from '~/utils/studioImageModels'
+import { maxReferenceImagesForModel } from '~/utils/studioReferenceImages'
 
 /** Keeps `model` and Gemini `aspectRatio` valid when provider or model changes. */
 export function useStudioInputsSync() {
   const studio = useStudioStore()
+  const toast = useToast()
 
   watch(
     () => studio.provider,
@@ -18,12 +20,32 @@ export function useStudioInputsSync() {
       if (!isAllowedStudioModel(p, studio.model)) {
         studio.model = defaultModelForProvider(p)
       }
+      const before = studio.referenceImages.length
+      studio.trimReferenceImagesToModel()
+      if (before > studio.referenceImages.length) {
+        toast.add({
+          title: 'References cleared',
+          description: 'Reference images are only supported on Gemini models.',
+          color: 'warning',
+        })
+      }
     },
   )
 
   watch(
     () => studio.model,
     (model, previous) => {
+      const before = studio.referenceImages.length
+      studio.trimReferenceImagesToModel()
+      if (before > studio.referenceImages.length) {
+        const max = maxReferenceImagesForModel(model)
+        toast.add({
+          title: 'References trimmed',
+          description: `This model allows up to ${max} reference image(s).`,
+          color: 'warning',
+        })
+      }
+
       if (studio.provider !== 'google-gemini') return
       if (
         (
