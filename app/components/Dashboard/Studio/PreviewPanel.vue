@@ -5,7 +5,7 @@
       {{ studio.error }}
     </div>
     <div v-else-if="!studio.lastOutput"
-      class="flex h-full flex-1 items-center justify-center p-8 text-center text-xs text-dark-950/40 dark:text-dark-50/40">
+      class="flex h-full flex-1 items-center animate-pulse justify-center p-8 text-center text-xs text-dark-950/40 dark:text-dark-50/40">
       Generated image appears here.
     </div>
     <div v-else ref="viewportRef"

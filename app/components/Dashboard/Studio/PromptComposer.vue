@@ -1,58 +1,22 @@
 <template>
   <div class="flex flex-col gap-1">
-    <UTextarea
-      v-model="draft"
-      variant="outline"
-      :rows="5"
-      :maxlength="maxLength"
-      placeholder="Describe your image: subject, setting, lighting, style…"
-      class="w-full bg-transparent disabled:opacity-50"
-      :disabled="busy"
-      :ui="textareaUi"
-      size="xs"
-      @blur="flushToStore"
-    />
+    <UTextarea v-model="draft" variant="outline" :rows="5" :maxlength="maxLength"
+      placeholder="Describe your image: subject, setting, lighting, style…" class="w-full" :disabled="busy"
+      :ui="textareaUi" size="xs" @blur="flushToStore" :autofocus="true" />
 
-    <div
-      v-if="referenceImages.length > 0"
-      class="scrollbar-hide flex gap-1.5 overflow-x-auto px-1.5"
-    >
-      <div
-        v-for="(url, index) in referenceImages"
-        :key="`${index}-${url.slice(0, 32)}`"
-        class="group relative shrink-0"
-      >
-        <img
-          :src="url"
-          alt=""
-          class="size-10 rounded-md object-cover ring-1 ring-default"
-          width="40"
-          height="40"
-          loading="lazy"
-          decoding="async"
-        >
-        <UButton
-          type="button"
-          color="neutral"
-          variant="solid"
-          size="xs"
-          square
-          icon="i-lucide-x"
-          class="absolute -end-1 -top-1 size-4 cursor-pointer opacity-0 transition-opacity group-hover:opacity-100"
-          :aria-label="`Remove reference ${index + 1}`"
-          @click="studio.removeReferenceImage(index)"
-        />
+    <div v-if="referenceImages.length > 0" class="scrollbar-hide flex gap-1.5 overflow-x-auto px-1.5">
+      <div v-for="(url, index) in referenceImages" :key="`${index}-${url.slice(0, 32)}`"
+        class="group relative shrink-0">
+        <UButton type="button" color="neutral" variant="subtle" size="xs" square icon="i-lucide-trash"
+          class="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 cursor-pointer opacity-0 transition-opacity group-hover:opacity-100"
+          :aria-label="`Remove reference ${index + 1}`" @click="studio.removeReferenceImage(index)" />
+        <NuxtImg :src="url" alt="" class="size-10 rounded-md object-cover ring-1 ring-default" width="40" height="40"
+          loading="lazy" decoding="async" />
+
       </div>
     </div>
 
-    <input
-      ref="fileInputRef"
-      type="file"
-      class="hidden"
-      :accept="accept"
-      multiple
-      @change="onReferenceFilesChange"
-    >
+    <input ref="fileInputRef" type="file" class="hidden" :accept="accept" multiple @change="onReferenceFilesChange">
 
     <div class="flex w-full items-center justify-between gap-2 px-1.5">
       <span class="select-none text-xxs tabular-nums" :class="counterToneClass">
@@ -63,48 +27,19 @@
       </span>
       <div class="flex items-center gap-1">
         <UTooltip :text="addImagesTooltip" :content="{ side: 'top' }" :delay-duration="0">
-          <UButton
-            type="button"
-            variant="subtle"
-            color="neutral"
-            size="xs"
-            square
-            icon="i-lucide-images"
-            class="cursor-pointer"
-            :disabled="busy || !canAdd"
-            :aria-label="addImagesTooltip"
-            @click="openReferencePicker"
-          />
+          <UButton type="button" variant="subtle" color="neutral" size="xs" square icon="i-lucide-image-plus"
+            class="cursor-pointer" :disabled="busy || !canAdd" :aria-label="addImagesTooltip"
+            @click="openReferencePicker" />
         </UTooltip>
         <UTooltip text="Enhance prompt" :content="{ side: 'top' }" :delay-duration="0">
-          <UButton
-            type="button"
-            variant="subtle"
-            color="neutral"
-            size="xs"
-            square
-            icon="i-lucide-sparkles"
-            class="cursor-pointer"
-            :disabled="busy || !canEnhance"
-            :loading="loadingGpt"
-            aria-label="Enhance prompt"
-            @click="onEnhance"
-          />
+          <UButton type="button" variant="subtle" color="neutral" size="xs" square icon="i-lucide-sparkles"
+            class="cursor-pointer" :disabled="busy || !canEnhance" :loading="loadingGpt" aria-label="Enhance prompt"
+            @click="onEnhance" />
         </UTooltip>
         <UTooltip text="Surprise prompt" :content="{ side: 'top' }" :delay-duration="0">
-          <UButton
-            type="button"
-            variant="subtle"
-            color="neutral"
-            size="xs"
-            square
-            icon="i-lucide-wand-2"
-            class="cursor-pointer"
-            :disabled="busy"
-            :loading="loadingSurprise"
-            aria-label="Surprise me with a random prompt"
-            @click="onSurprise"
-          />
+          <UButton type="button" variant="subtle" color="neutral" size="xs" square icon="i-lucide-wand-2"
+            class="cursor-pointer" :disabled="busy" :loading="loadingSurprise"
+            aria-label="Surprise me with a random prompt" @click="onSurprise" />
         </UTooltip>
       </div>
     </div>
@@ -118,7 +53,8 @@ const warnAtChars = 3000
 /** Static — avoids new `ui` object every render (UTextarea deep-watches props). */
 const textareaUi = {
   base:
-    'resize-none border-0 bg-transparent ring-0 focus:ring-0 focus:outline-none p-1.5 rounded-none shadow-none text-sm placeholder:text-dimmed max-h-40 focus-visible:ring-0 focus-visible:ring-offset-0',
+    'resize-none border-0 bg-transparent dark:bg-transparent hover:bg-transparent dark:hover:bg-transparent focus:bg-transparent dark:focus:bg-transparent ring-0 focus:ring-0 focus:outline-none p-1.5 rounded-none shadow-none text-sm placeholder:text-dimmed max-h-40 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-dark-950/30 dark:placeholder:text-dark-50/20',
+
 } as const
 
 const studio = useStudioStore()

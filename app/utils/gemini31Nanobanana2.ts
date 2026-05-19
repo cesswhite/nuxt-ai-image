@@ -34,7 +34,7 @@ export interface Nanobanana2RequestOptions {
 }
 
 export const NANOBANANA2_DEFAULTS = {
-  outputFormat: 'text_and_image' as Nanobanana2OutputFormat,
+  outputFormat: 'image_only' as Nanobanana2OutputFormat,
   temperature: 1,
   imageSize: '1K' as Nanobanana2ImageSize,
   groundingWeb: false,

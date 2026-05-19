@@ -47,7 +47,7 @@ export default defineAppConfig({
       variants: {
         variant: {
           subtle: {
-            root: 'bg-elevated ring ring-default/70 shadow-sm divide-none rounded-lg',
+            root: 'bg-dark-50 dark:bg-dark-900/50 inset-ring inset-ring-white dark:inset-ring-black/60 ring ring-dark-950/4 dark:ring-dark-50/4 shadow-sm ',
           },
         },
       },

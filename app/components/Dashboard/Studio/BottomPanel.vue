@@ -5,16 +5,16 @@
       root: 'rounded-xl',
       body: 'p-1.5 sm:p-1.5 mt-0',
     }" class="pointer-events-auto w-full">
-      <div class="flex flex-col gap-3">
+      <div class="flex flex-col">
         <div class="mb-1 w-full">
           <DashboardStudioPromptComposer ref="promptComposerRef" />
         </div>
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex flex-col justify-start gap-2 px-1.5">
+        <div class="flex items-center justify-between gap-x-1">
+          <div class="flex flex-col justify-start gap-2 px-1">
             <span class="text-xxs text-dark-950/30 dark:text-dark-50/30">
               Provider & Model
             </span>
-            <div class="flex items-center justify-start gap-2">
+            <div class="flex items-center justify-start gap-x-1">
               <DashboardStudioFieldDropdown v-model="studio.provider" :items="providerMenuItems"
                 :disabled="studio.loading" placeholder="Provider…" :tooltip="providerTooltip" :block="false"
                 button-class="" />
@@ -28,7 +28,7 @@
             <span class="text-xxs text-dark-950/30 dark:text-dark-50/30">
               Configuration
             </span>
-            <div class="flex items-center justify-start gap-x-1.5">
+            <div class="flex items-center justify-start gap-x-1">
               <DashboardStudioFieldDropdown v-if="studio.provider === 'google-gemini' && isNanobanana2"
                 v-model="studio.aspectRatio" :items="geminiAspectItems" :disabled="studio.loading" placeholder="Ratio…"
                 :tooltip="aspectTooltip" :block="false" button-class="" />
