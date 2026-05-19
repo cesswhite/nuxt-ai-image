@@ -1,6 +1,10 @@
 /**
- * Extract the last non-thought image from Gemini generateContent parts as a data URL.
+ * Gemini image streaming helpers for `/api/image/*` routes.
  */
+import { GoogleGenAI } from '@google/genai'
+import { createError } from 'h3'
+import type { ImageGenResult } from './imageApiCommon'
+
 export function dataUrlFromGeminiParts(partsOut: unknown[] | undefined): string | null {
   if (!partsOut?.length) return null
   let lastImage: { data: string, mimeType: string } | null = null
@@ -38,4 +42,48 @@ export function geminiErrorMessage(e: unknown): string {
     return e.message
   }
   return 'Gemini image generation failed'
+}
+
+export function rethrowGeminiImageError(e: unknown): never {
+  if (e && typeof e === 'object' && 'statusCode' in e) throw e
+  const msg = geminiErrorMessage(e)
+  const anyE = e as { status?: number }
+  const code = typeof anyE.status === 'number' && anyE.status >= 400 && anyE.status < 600
+    ? anyE.status
+    : 502
+  throw createError({ statusCode: code, message: msg })
+}
+
+export async function collectGeminiStreamParts(
+  stream: AsyncIterable<{ candidates?: Array<{ content?: { parts?: unknown[] } }> }>,
+): Promise<unknown[] | undefined> {
+  let lastParts: unknown[] | undefined
+  for await (const chunk of stream) {
+    const parts = chunk.candidates?.[0]?.content?.parts as unknown[] | undefined
+    if (parts?.length) lastParts = parts
+  }
+  return lastParts
+}
+
+export async function generateGeminiImageFromStream(params: {
+  apiKey: string
+  model: string
+  prompt: string
+  config: Record<string, unknown>
+}): Promise<ImageGenResult> {
+  const ai = new GoogleGenAI({ apiKey: params.apiKey.trim() })
+  const stream = await ai.models.generateContentStream({
+    model: params.model,
+    contents: [{ role: 'user', parts: [{ text: params.prompt }] }],
+    config: params.config as never,
+  })
+  const lastParts = await collectGeminiStreamParts(stream)
+  const output = dataUrlFromGeminiParts(lastParts)
+  if (!output) {
+    throw createError({
+      statusCode: 502,
+      message: 'No image in Gemini response — try a different prompt or model.',
+    })
+  }
+  return { output, provider: 'google-gemini', model: params.model }
 }

@@ -1,5 +1,5 @@
 import { isGptImage2Model } from '~/utils/openAiImagePresets'
-import { parseStopSequencesFromRaw } from '~/utils/gemini31Nanobanana2'
+import { parseStopSequencesFromRaw } from '~/utils/geminiImageUtils'
 import { postUrlForImageModel } from '~/utils/imageApiRoutes'
 import { STUDIO_IMAGE_MODEL } from '~/utils/studioImageModels'
 

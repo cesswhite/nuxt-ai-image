@@ -11,7 +11,7 @@ import type { StudioProvider } from '~/types/studio'
  * is easy to confuse with **`gemini-3.1-flash-image-preview`** (“-lite” vs “-flash-image-”).
  * Image-capable IDs use `…-image…` / `…-flash-image` (e.g. `gemini-2.5-flash-image`).
  *
- * Keep in sync with `server/api/image/*.post.ts` and `app/utils/geminiAspectRatios.ts`.
+ * Keep in sync with `server/api/image/*.post.ts` and `app/utils/geminiImageUtils.ts`.
  */
 type StudioImageModelDef = {
   readonly key: string

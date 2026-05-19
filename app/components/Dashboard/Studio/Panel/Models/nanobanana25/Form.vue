@@ -98,7 +98,7 @@
           v-model="studio.nanobanana25TopP"
           :min="0"
           :max="1"
-          :step="NANOBANANA2_TOP_P_STEP"
+          :step="STUDIO_TOP_P_STEP"
           :disabled="studio.loading"
         />
       </UFormField>
@@ -120,11 +120,12 @@
 
 <script setup lang="ts">
 import {
-  clampNanobanana2TopP,
-  NANOBANANA2_TOP_P_STEP,
-} from '~/utils/gemini31Nanobanana2'
-import { clampNanobananaProMaxOutputTokens } from '~/utils/geminiProNanobanana'
-import { geminiAspectSelectItemsForModel } from '~/utils/geminiAspectRatios'
+  clampStudioMaxOutputTokens,
+  clampStudioTopP,
+  geminiAspectSelectItemsForModel,
+  STUDIO_TOP_P_STEP,
+} from '~/utils/geminiImageUtils'
+import { NANOBANANA_25_DEFAULTS } from '~/utils/gemini25Nanobanana'
 import { STUDIO_IMAGE_MODEL } from '~/utils/studioImageModels'
 
 const labelRowUi = { label: 'flex items-center justify-between w-full' } as const
@@ -139,15 +140,16 @@ const aspectItems = computed(() =>
 )
 
 function clampMaxOutputTokens() {
-  studio.nanobanana25MaxOutputTokens = clampNanobananaProMaxOutputTokens(
+  studio.nanobanana25MaxOutputTokens = clampStudioMaxOutputTokens(
     studio.nanobanana25MaxOutputTokens,
+    NANOBANANA_25_DEFAULTS.maxOutputTokens,
   )
 }
 
 watch(
   () => studio.nanobanana25TopP,
   (value) => {
-    const next = clampNanobanana2TopP(value)
+    const next = clampStudioTopP(value, NANOBANANA_25_DEFAULTS.topP)
     if (next !== value) {
       studio.nanobanana25TopP = next
     }

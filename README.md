@@ -41,37 +41,36 @@ See `.env.example`. Set `OPENAI_API_KEY` and/or `GEMINI_API_KEY` (or `GOOGLE_API
 
 ```
 app/
-  components/Dashboard/Sidebar/Container.vue
-  components/Dashboard/Studio/Container.vue
-  components/Dashboard/PageNavbar.vue
-  layouts/dashboard.vue
-  pages/(home).vue
-  pages/dashboard/(studio).vue
-  pages/dashboard/settings.vue
-  composables/useDashboardSidebarOpen.ts
+  utils/
+    studioImageModels.ts    # model allowlist, icons, menus
+    imageApiRoutes.ts       # model ID → POST /api/image/<slug>
+    geminiImageUtils.ts     # clamps, aspects, buildGeminiImageConfig
+    gemini31Nanobanana2.ts  # Nanobanana 2 resolve + defaults
+    geminiProNanobanana.ts  # Nanobanana Pro
+    gemini25Nanobanana.ts   # Nanobanana (2.5)
+    openAiImagePresets.ts
+    textApiRoutes.ts
   composables/useGenerateImage.ts
   stores/studio.ts
+  components/Dashboard/Studio/…
 server/
-  api/image/
-    gpt-image-1-5.post.ts
-    gpt-image-2.post.ts
-    gemini-3-1-flash-image-preview.post.ts
-    gemini-3-pro-image-preview.post.ts
-    gemini-2-5-flash-image.post.ts
-  api/text/
-    enhance-prompt.post.ts
-    surprise-prompt.post.ts
-  utils/imageApiCommon.ts
-  utils/promptAssistOpenAi.ts
+  api/image/*.post.ts       # one route per model
+  api/text/*.post.ts
+  utils/
+    imageApiCommon.ts       # readJsonBody, keys, aspectRatioFromBody
+    geminiImage.ts          # stream + data URL + errors
+    geminiNanobanana2Config.ts
+    openAiImage.ts
+    openAiImageSize.ts
+    promptAssistOpenAi.ts
 docs/
-  DECISIONS.md
-  GEMINI_IMAGE_UNDERSTANDING.md
+  IMAGE_PIPELINE.md         # full API + utils reference
   GEMINI_NANO_BANANA.md
-  IMAGE_PIPELINE.md
+  ARCHITECTURE.md
+  DECISIONS.md
 public/
   llms.txt
   pricing.md
-.cursor/skills/
 ```
 
 ## Cursor skills

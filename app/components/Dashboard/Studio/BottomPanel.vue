@@ -17,7 +17,7 @@
 
         <div v-else class="flex flex-col gap-3">
           <div class="flex items-center justify-end gap-1">
-            <DashboardStudioLeftPanelAppearanceMenu compact />
+            <DashboardStudioPanelAppearanceMenu compact />
             <UTooltip text="Minimize composer" :content="{ side: 'top' }" :delay-duration="0">
               <UButton variant="ghost" color="neutral" size="xs" square class="cursor-pointer shrink-0"
                 icon="i-lucide-chevrons-down" aria-controls="studio-composer-panel" :aria-expanded="true"
@@ -59,18 +59,16 @@
               button-class="w-[9.5rem] shrink-0 rounded-full" />
             <DashboardStudioFieldDropdown v-model="studio.model" :items="modelItems" :disabled="studio.loading"
               placeholder="Model…" :block="false" button-class="min-w-[9rem] max-w-full flex-1 rounded-full" />
-            <DashboardStudioFieldDropdown
-              v-if="studio.provider === 'google-gemini' && isNanobanana2"
-              v-model="studio.aspectRatio"
-              :items="geminiAspectItems" :disabled="studio.loading" placeholder="Ratio…" :block="false"
-              button-class="min-w-[7.5rem] shrink-0 rounded-full" />
+            <DashboardStudioFieldDropdown v-if="studio.provider === 'google-gemini' && isNanobanana2"
+              v-model="studio.aspectRatio" :items="geminiAspectItems" :disabled="studio.loading" placeholder="Ratio…"
+              :block="false" button-class="min-w-[7.5rem] shrink-0 rounded-full" />
           </div>
 
           <div class="max-h-[min(38vh,18rem)] overflow-y-auto overflow-x-hidden border-t border-default/40 pt-3">
-            <DashboardStudioLeftPanelModelsNanobanana2Form v-if="isNanobanana2" />
-            <DashboardStudioLeftPanelModelsNanobananaProForm v-if="isNanobananaPro" />
-            <DashboardStudioLeftPanelModelsNanobanana25Form v-if="isNanobanana25" />
-            <DashboardStudioLeftPanelModelsOpenaiForm :is-open-ai15="isOpenAi15" :is-open-ai2="isOpenAi2" />
+            <DashboardStudioPanelModelsNanobanana2Form v-if="isNanobanana2" />
+            <DashboardStudioPanelModelsNanobananaProForm v-if="isNanobananaPro" />
+            <DashboardStudioPanelModelsNanobanana25Form v-if="isNanobanana25" />
+            <DashboardStudioPanelModelsOpenaiForm :is-open-ai15="isOpenAi15" :is-open-ai2="isOpenAi2" />
           </div>
         </div>
       </UCard>
@@ -85,7 +83,7 @@ import {
   studioModelSelectItems,
   studioProviderSelectItems,
 } from '~/utils/studioImageModels'
-import { geminiAspectSelectItemsForModel } from '~/utils/geminiAspectRatios'
+import { geminiAspectSelectItemsForModel } from '~/utils/geminiImageUtils'
 
 const easeOutExpo = [0.19, 1, 0.22, 1] as const
 

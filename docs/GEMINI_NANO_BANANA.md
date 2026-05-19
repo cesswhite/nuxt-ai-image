@@ -4,9 +4,7 @@
 
 **Not the same as vision:** analyzing or captioning **uploaded** images (output is **text/JSON**) is **[image understanding](https://ai.google.dev/gemini-api/docs/image-understanding)** — see **[GEMINI_IMAGE_UNDERSTANDING.md](./GEMINI_IMAGE_UNDERSTANDING.md)**.
 
-This template’s studio allowlist contains **exactly these three** API IDs (see `app/utils/studioImageModels.ts`): no other Gemini models are enabled for image generation here.
-
-Each **`/api/image/*`** route implements **one model**. **Nanobanana 2** (`gemini-3.1-flash-image-preview`) follows Google’s sample setup (image search tool, high thinking, image-only modalities); the body is **`prompt`** plus optional **`aspect_ratio`** / **`image_size`** — see `docs/IMAGE_PIPELINE.md`. **Nanobanana Pro** can pass **Google Search grounding**, resolution, temperature, and related options; **Nanobanana** (**2.5 Flash Image**) can pass **system instructions**, temperature, and advanced generation params. There is still **no** multi-image upload or chat session in the stock routes.
+The studio allowlist contains **exactly three** Gemini image API IDs (see **`app/utils/studioImageModels.ts`**). Each has a matching **`POST /api/image/*`** route and shared resolve helpers under **`app/utils/gemini*.ts`**.
 
 ---
 
@@ -14,11 +12,25 @@ Each **`/api/image/*`** route implements **one model**. **Nanobanana 2** (`gemin
 
 | Product name (studio) | Model ID | Role |
 |------------------------|----------|------|
-| **Nanobanana 2** | `gemini-3.1-flash-image-preview` | **Default in this template** — Flash-speed + 3.1-class controls (full aspect list incl. Auto / **1:8** — see `app/utils/geminiAspectRatios.ts`). |
-| **Nanobanana Pro** | `gemini-3-pro-image-preview` | **Pro assets** — **Auto** aspect + **1K/2K/4K** resolution, optional **system instructions**, Search grounding; UI in `geminiProNanobanana.ts` / studio. |
-| **Nanobanana** | `gemini-2.5-flash-image` | Fast **Flash Image** — **Auto** aspect + Studio ratio list, optional **system instructions**, temperature / **Top P** / output length; **no** 1K–4K resolution control in API (aspect-only `imageConfig`). See `gemini25Nanobanana.ts`. |
+| **Nanobanana 2** | `gemini-3.1-flash-image-preview` | **Default** — full AI Studio controls: output format, temperature, **512–4K**, aspect (incl. **1:8** / **8:1**), web + image search grounding, thinking level, stop sequences, Top P, max output tokens. |
+| **Nanobanana Pro** | `gemini-3-pro-image-preview` | **Pro assets** — Auto aspect + **1K/2K/4K**, system instructions, Search grounding, temperature / Top P / output length. |
+| **Nanobanana** | `gemini-2.5-flash-image` | Fast **Flash Image** — Auto aspect + standard ratio list, system instructions, temperature / Top P / output length; **no** 1K–4K `imageSize` in API. |
 
-Expect **both `TEXT` and `IMAGE` parts** in responses (the model may comment or label before the image). The template extracts the **last non-thought image** inline part for the preview.
+### How the template wires each model
+
+| Model | Client body shape | Server |
+|-------|-------------------|--------|
+| **Nanobanana 2** | Flat fields on POST root (`output_format`, `image_size`, `grounding_*`, …) — built in **`useGenerateImage`** | `resolveNanobanana2Request(body)` → **`buildNanobanana2GeminiConfig()`** (`server/utils/geminiNanobanana2Config.ts`) |
+| **Nanobanana Pro** | Nested `nanobanana_pro` | `resolveNanobananaProRequest()` + route config |
+| **Nanobanana (2.5)** | Nested `nanobanana_25` | `resolveNanobanana25Request()` + route config |
+
+Full field tables: **[IMAGE_PIPELINE.md](./IMAGE_PIPELINE.md)**.
+
+### Response parts
+
+By default Nanobanana 2 uses **`text_and_image`** modalities, so the API may return **both `TEXT` and `IMAGE` parts** (comments or labels before the image). Choose **`image_only`** in the studio to request **`IMAGE`** only. The server picks the **last non-thought** `inlineData` image for the preview (`server/utils/geminiImage.ts`).
+
+There is **no** multi-image upload or chat session in the stock routes.
 
 ---
 
@@ -26,7 +38,7 @@ Expect **both `TEXT` and `IMAGE` parts** in responses (the model may comment or 
 
 - **2.5 Flash Image** — Quick iterations, thumbnails, simple scenes; fewer input reference images (up to **3** in official limits for best results).
 - **3 Pro Image Preview** — Branding, infographics, menus, packaging, **legible typography**, multi-step or layout-heavy prompts; **up to 4K**; Search grounding for **current facts** (weather, news, scores).
-- **3.1 Flash Image Preview** — General **default** when you want Gemini 3.1-class behavior: speed + quality, **512** smallest tier (3.1 Flash only), broad **aspect ratio** set, **grounded** visuals when you wire Search tools.
+- **3.1 Flash Image Preview** — General **default** when you want Gemini 3.1-class behavior: speed + quality, **512** smallest tier (3.1 Flash only), broad **aspect ratio** set, **grounded** visuals when Search / image search tools are enabled in the studio.
 
 For **Imagen-only** workflows (no Gemini multimodal), see [Imagen](https://ai.google.dev/gemini-api/docs/imagen) — not wired in this template.
 
@@ -34,42 +46,42 @@ For **Imagen-only** workflows (no Gemini multimodal), see [Imagen](https://ai.go
 
 ## Prompting (best practices from Google)
 
-1. **Describe the scene, not a tag list.** A short **narrative paragraph** beats comma-separated keywords: include subject, setting, light, mood, camera feel, and purpose (e.g. “hero for a skincare landing page”).
-2. **Use domain language** — For photorealism: focal length, lighting (e.g. golden hour, softbox), angle (e.g. 45°, eye level). For products: “studio three-point light”, “polished concrete surface”.
-3. **State intent** — “For an ecommerce square crop” or “minimal poster with room for headline” steers layout and negative space.
-4. **Iterate in plain language** — “Warmer light, same composition” / “replace text with Spanish” matches how the **chat / multi-turn** API is designed (this repo’s single-shot route still benefits from the same style of clarity).
-5. **Text inside the image** — Be explicit about **copy**, font style (descriptively), and hierarchy. **Pro** is strongest for professional typography; ask for text **clearly** and revise in follow-up turns when using a chat-based flow.
-6. **Semantic positives over negatives** — Prefer “empty street at dawn, no people” over only “no cars”.
-7. **Complex scenes** — Order steps: background → foreground → hero object → finishing detail.
+1. **Describe the scene, not a tag list.** A short **narrative paragraph** beats comma-separated keywords: subject, setting, light, mood, camera feel, purpose.
+2. **Use domain language** — focal length, lighting (golden hour, softbox), angle; for products: “studio three-point light”, “polished concrete surface”.
+3. **State intent** — “For an ecommerce square crop” or “minimal poster with room for headline”.
+4. **Iterate in plain language** — matches multi-turn API design; single-shot routes still benefit from clarity.
+5. **Text inside the image** — Be explicit about copy and hierarchy. **Pro** is strongest for typography.
+6. **Semantic positives over negatives** — “empty street at dawn, no people” over only “no cars”.
+7. **Complex scenes** — background → foreground → hero → finishing detail.
 
 ---
 
 ## Technical expectations (parity with official behavior)
 
-- **SynthID** — Generated images include Google’s [SynthID](https://ai.google.dev/responsible/docs/safeguards/synthid) watermarking (invisible metadata / safeguards per policy).
-- **Thinking (Gemini 3 image family)** — “Thinking” can run **by default**; interim **thought** parts may appear; billing can include thinking-related usage. The client code treats `thought` parts as non-final when picking the output image.
-- **Thought signatures** — Multi-turn flows should pass **thought signatures** back with history; high-level SDK **chat** helpers often handle this. Raw `generateContent` loops must follow [thought signatures](https://ai.google.dev/gemini-api/docs/thought-signatures) if you extend this app.
-- **Resolution** — Gemini 3.x image models support **`imageSize`**: `512`, `1K`, `2K`, `4K` (uppercase **K** in API). **3.1 Flash Image** uniquely adds **512** (“0.5K”). This template currently sends **`1K`** for 3.x models in code; upgrade the handler + studio when you need **2K/4K/512**.
-- **Aspect ratios** — **2.5 / 3 Pro Flash Image** share Studio ordering with **Auto** (omit `aspectRatio`) in `app/utils/geminiAspectRatios.ts`. **3.1 Flash Image Preview** adds extra ratios (**1:8**, **8:1**, **1:4**, **4:1**). The studio reads the same lists as the API.
-- **Reference images** — Up to **14** total in advanced workflows (split between **object** vs **character** slots depending on model); **2.5** ~**3** inputs for best results. Not implemented in the stock **`/api/image/*`** routes.
-- **Grounding** — **Google Search** / **Image Search** tools produce **real-time or fact-based** visuals (charts, weather). Requires `tools` in `generateContent` config and UI for attribution (see **Display requirements** for image search in Google’s doc). Not wired in the template.
-- **Transparency** — Model does **not** support true **transparent PNG** as a guaranteed feature; ask for **solid / white** background when you need cutout-like assets.
+- **SynthID** — Generated images include Google’s [SynthID](https://ai.google.dev/responsible/docs/safeguards/synthid) watermarking per policy.
+- **Thinking (Gemini 3 image family)** — Interim **thought** parts may appear; billing can include thinking usage. The template skips `thought` parts when selecting the output image. Nanobanana 2 can set **`thinking_level`** (`minimal`–`high`) when not left at studio “default”.
+- **Thought signatures** — Multi-turn flows should pass signatures back; see [thought signatures](https://ai.google.dev/gemini-api/docs/thought-signatures) if you add chat.
+- **Resolution** — **`imageSize`**: `512`, `1K`, `2K`, `4K` (uppercase **K**). **512** is **3.1 Flash Image** only. The studio defaults to **`1K`**; Pro and 2.5 routes pass the studio value through **`buildGeminiImageConfig()`**.
+- **Aspect ratios** — Lists and **Auto** (omit `aspectRatio` in API) live in **`app/utils/geminiImageUtils.ts`**. **3.1 Flash Image** adds **1:8**, **8:1**, **1:4**, **4:1** beyond the 2.5/Pro set.
+- **Reference images** — Up to **14** in advanced Google workflows; **~3** recommended for 2.5. Not implemented in stock **`/api/image/*`** routes.
+- **Grounding** — **Google Search** and **image search** tools are available for **Nanobanana 2** (studio toggles) and **Nanobanana Pro** (web search). Follow Google’s **display requirements** for search-grounded images.
+- **Transparency** — True transparent PNG is not guaranteed; use solid backgrounds for cutout-like assets.
 
 ---
 
 ## Limitations (short list)
 
-- Best languages for prompting include **English** and others listed in Google’s doc (full list in official “Limitations” section).
-- **No audio/video as generation input** for image generation mode.
-- Output **count** may not match “give me exactly N images” every time.
-- **Grounding with Search** + **people** from web image results: restrictions apply (**3.1 Flash Image** — see current Google notes on people in image search).
-- **Batch** high-volume generation: use [Batch API](https://ai.google.dev/gemini-api/docs/batch-api) for scale (not in this template).
+- Best prompting languages include **English** (see Google’s doc for the full list).
+- **No audio/video** as generation input in image mode.
+- Output **count** may not match “exactly N images” every time.
+- **Grounding + people** from web image search: restrictions on **3.1 Flash Image** — check current Google notes.
+- **Batch** at scale: [Batch API](https://ai.google.dev/gemini-api/docs/batch-api) — not in this template.
 
 ---
 
 ## References
 
-- [Image generation (Nano Banana)](https://ai.google.dev/gemini-api/docs/image-generation) — full prompts, editing, grounding, resolution tables.
+- [Image generation (Nano Banana)](https://ai.google.dev/gemini-api/docs/image-generation)
 - [Gemini 3.1 Flash Image Preview](https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-image-preview)
 - [Gemini 3 Pro Image Preview](https://ai.google.dev/gemini-api/docs/models/gemini-3-pro-image-preview)
 - [Gemini 2.5 Flash Image](https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash-image)

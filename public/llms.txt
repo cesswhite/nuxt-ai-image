@@ -6,17 +6,20 @@
 
 - File-based routes: `/` (landing), `/dashboard` (studio), `/dashboard/settings`.
 - Server routes `POST /api/image/*` — one path per image model; OpenAI or Google GenAI (keys in `.env`).
-- `POST /api/text/enhance-prompt`, `POST /api/text/surprise-prompt` — OpenAI chat helpers for the studio (see `server/utils/promptAssistOpenAi.ts`).
+- `POST /api/text/enhance-prompt`, `POST /api/text/surprise-prompt` — OpenAI chat helpers for the studio.
 - Pinia store `useStudioStore`, composable `useGenerateImage`.
-- Dashboard shell: `USidebar`, `UCard`, `UForm`, tokens (`text-highlighted`, `bg-default`, etc.).
+- Dashboard shell: `USidebar`, studio 12-column grid, semantic tokens (`text-highlighted`, `bg-default`, etc.).
 
 ## Key files
 
 - `docs/DECISIONS.md` — rationale for stack, route naming, and docs split
-- `app/pages/dashboard/(studio).vue` — studio UI
-- `server/api/image/*.post.ts` — OpenAI + Google GenAI image generation (`server/utils/imageApiCommon.ts` for shared auth/helpers)
-- `server/api/text/*.post.ts` + `server/utils/promptAssistOpenAi.ts` — enhance / surprise prompt (OpenAI chat)
-- `docs/IMAGE_PIPELINE.md` — wiring guide
+- `docs/IMAGE_PIPELINE.md` — routes, POST bodies, `app/utils` + `server/utils` map
+- `docs/GEMINI_NANO_BANANA.md` — Gemini image models, prompting, grounding, limits
+- `app/utils/studioImageModels.ts` — allowed image model IDs
+- `app/utils/geminiImageUtils.ts` — shared clamps, aspect ratios, imageConfig builder
+- `server/api/image/*.post.ts` — thin handlers per model
+- `server/utils/geminiImage.ts` — Gemini streaming and data URL extraction
+- `server/utils/promptAssistOpenAi.ts` — enhance / surprise prompt
 - `docs/PERFORMANCE.md` — budgets and Core Web Vitals habits
 - `docs/AI_SEO.md` — llms.txt, structured pages, citations
 

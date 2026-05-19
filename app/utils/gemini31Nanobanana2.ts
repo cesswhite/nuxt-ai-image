@@ -3,9 +3,17 @@
  * @see https://ai.google.dev/gemini-api/docs/image-generation
  */
 
+import {
+  asRequestBodyRecord,
+  clampStudioMaxOutputTokens,
+  clampStudioTemperature,
+  clampStudioTopP,
+  parseStopSequencesField,
+  STUDIO_TOP_P_STEP,
+} from '~/utils/geminiImageUtils'
+
 export type Nanobanana2OutputFormat = 'text_and_image' | 'image_only'
 
-/** Maps to Gemini `thinkingConfig.thinkingLevel` when set (model must support thinking). */
 export const NANOBANANA2_THINKING_LEVELS = ['minimal', 'low', 'medium', 'high'] as const
 export type Nanobanana2ThinkingLevel = (typeof NANOBANANA2_THINKING_LEVELS)[number]
 
@@ -22,11 +30,9 @@ export interface Nanobanana2RequestOptions {
   max_output_tokens?: number
   top_p?: number
   thinking_level?: Nanobanana2ThinkingLevel
-  /** When true/false, sets `thinkingConfig.includeThoughts` (API returns thought parts if supported). */
   include_thoughts?: boolean
 }
 
-/** Default studio / API defaults (aligned with typical AI Studio snapshot). */
 export const NANOBANANA2_DEFAULTS = {
   outputFormat: 'text_and_image' as Nanobanana2OutputFormat,
   temperature: 1,
@@ -38,38 +44,12 @@ export const NANOBANANA2_DEFAULTS = {
   topP: 0.95,
 } as const
 
-export function parseStopSequencesFromRaw(raw: string): string[] | undefined {
-  const parts = raw
-    .split(/[\n,|]+/)
-    .map((s) => s.trim())
-    .filter(Boolean)
-  if (parts.length === 0) return undefined
-  return parts.slice(0, 8)
-}
+export { STUDIO_TOP_P_STEP }
 
 export function normalizeNanobanana2ImageSize(raw: string | undefined): Nanobanana2ImageSize {
   const s = (raw ?? '1K').trim()
   if ((NANOBANANA2_IMAGE_SIZES as readonly string[]).includes(s)) return s as Nanobanana2ImageSize
   return '1K'
-}
-
-export function clampNanobanana2Temperature(n: number | undefined): number {
-  if (typeof n !== 'number' || Number.isNaN(n)) return NANOBANANA2_DEFAULTS.temperature
-  return Math.min(1, Math.max(0, n))
-}
-
-/** Top P slider: 0–1 in steps of 0.05 (AI Studio–style granularity). */
-export const NANOBANANA2_TOP_P_STEP = 0.05
-
-export function clampNanobanana2TopP(n: number | undefined): number {
-  if (typeof n !== 'number' || Number.isNaN(n)) return NANOBANANA2_DEFAULTS.topP
-  const clamped = Math.min(1, Math.max(0, n))
-  return Math.round(clamped / NANOBANANA2_TOP_P_STEP) * NANOBANANA2_TOP_P_STEP
-}
-
-export function clampNanobanana2MaxOutputTokens(n: number | undefined): number {
-  if (typeof n !== 'number' || Number.isNaN(n)) return NANOBANANA2_DEFAULTS.maxOutputTokens
-  return Math.min(65_536, Math.max(1, Math.floor(n)))
 }
 
 function parseNanobanana2ThinkingLevel(raw: unknown): Nanobanana2ThinkingLevel | undefined {
@@ -80,20 +60,8 @@ function parseNanobanana2ThinkingLevel(raw: unknown): Nanobanana2ThinkingLevel |
     : undefined
 }
 
-/** Parse flat POST fields for `gemini-3.1-flash-image-preview`. */
 export function resolveNanobanana2Request(raw: unknown): Nanobanana2RequestOptions {
-  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
-
-  const stopRaw = o.stop_sequences
-  let stop_sequences: string[] | undefined
-  if (Array.isArray(stopRaw)) {
-    const arr = stopRaw
-      .filter((x): x is string => typeof x === 'string')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .slice(0, 8)
-    stop_sequences = arr.length ? arr : undefined
-  }
+  const o = asRequestBodyRecord(raw)
 
   const fmt = o.output_format
   const output_format
@@ -103,19 +71,24 @@ export function resolveNanobanana2Request(raw: unknown): Nanobanana2RequestOptio
 
   return {
     output_format,
-    temperature: clampNanobanana2Temperature(
+    temperature: clampStudioTemperature(
       typeof o.temperature === 'number' ? o.temperature : undefined,
+      NANOBANANA2_DEFAULTS.temperature,
     ),
     image_size: normalizeNanobanana2ImageSize(
       typeof o.image_size === 'string' ? o.image_size : undefined,
     ),
     grounding_web: Boolean(o.grounding_web),
     grounding_image_search: Boolean(o.grounding_image_search),
-    stop_sequences,
-    max_output_tokens: clampNanobanana2MaxOutputTokens(
+    stop_sequences: parseStopSequencesField(o.stop_sequences),
+    max_output_tokens: clampStudioMaxOutputTokens(
       typeof o.max_output_tokens === 'number' ? o.max_output_tokens : undefined,
+      NANOBANANA2_DEFAULTS.maxOutputTokens,
     ),
-    top_p: clampNanobanana2TopP(typeof o.top_p === 'number' ? o.top_p : undefined),
+    top_p: clampStudioTopP(
+      typeof o.top_p === 'number' ? o.top_p : undefined,
+      NANOBANANA2_DEFAULTS.topP,
+    ),
     thinking_level: parseNanobanana2ThinkingLevel(o.thinking_level),
     include_thoughts: typeof o.include_thoughts === 'boolean' ? o.include_thoughts : undefined,
   }

@@ -1,48 +1,55 @@
-import { createError, defineEventHandler, readBody } from 'h3'
+import { createError, defineEventHandler } from 'h3'
 import OpenAI from 'openai'
-import { promptFromBody, requireOpenAiKey } from '../../utils/imageApiCommon'
-import { dataUrlFromOpenAiResult, normalizeOpenAiQuality, openAiGptImage15SizeForAspect } from '../../utils/openAiImageSize'
+import {
+  promptFromBody,
+  readJsonBody,
+  requireOpenAiKey,
+} from '../../utils/imageApiCommon'
+import {
+  dataUrlFromOpenAiResult,
+  normalizeOpenAiQuality,
+  openAiGptImage15SizeForAspect,
+} from '../../utils/openAiImageSize'
+import { imageGenResultFromOpenAi, rethrowOpenAiImageError } from '../../utils/openAiImage'
 
 const MODEL = 'gpt-image-1.5' as const
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
-  const raw = await readBody(event).catch(() => ({}))
-  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
-
   requireOpenAiKey(config)
-  const prompt = promptFromBody(o.prompt)
+
+  const body = await readJsonBody(event)
+  const prompt = promptFromBody(body.prompt)
   if (!prompt) {
     throw createError({ statusCode: 400, message: 'prompt is required.' })
   }
-  const aspectRatio = typeof o.aspect_ratio === 'string' && o.aspect_ratio.trim()
-    ? o.aspect_ratio.trim()
+
+  const aspectRatio = typeof body.aspect_ratio === 'string' && body.aspect_ratio.trim()
+    ? body.aspect_ratio.trim()
     : '1:1'
   const quality = normalizeOpenAiQuality(
-    typeof o.openai_quality === 'string' ? o.openai_quality : undefined,
+    typeof body.openai_quality === 'string' ? body.openai_quality : undefined,
   )
 
   try {
     const openai = new OpenAI({ apiKey: String(config.openaiApiKey).trim() })
-    const size = openAiGptImage15SizeForAspect(aspectRatio)
     const res = await openai.images.generate({
       model: MODEL,
       prompt,
       n: 1,
-      size,
+      size: openAiGptImage15SizeForAspect(aspectRatio),
       quality,
     })
     const first = res.data?.[0]
-    const b64 = first?.b64_json
-    const outFmt = first && 'output_format' in first && first.output_format
-      ? (first.output_format as 'png' | 'jpeg' | 'webp')
-      : undefined
-    const output = dataUrlFromOpenAiResult(b64, outFmt)
-    return { output, provider: 'openai', model: MODEL }
+    const output = dataUrlFromOpenAiResult(
+      first?.b64_json,
+      first && 'output_format' in first && first.output_format
+        ? (first.output_format as 'png' | 'jpeg' | 'webp')
+        : undefined,
+    )
+    return imageGenResultFromOpenAi(output, MODEL)
   }
   catch (e: unknown) {
-    if (e && typeof e === 'object' && 'statusCode' in e) throw e
-    const msg = e instanceof Error ? e.message : 'OpenAI image generation failed'
-    throw createError({ statusCode: 502, message: msg })
+    rethrowOpenAiImageError(e)
   }
 })

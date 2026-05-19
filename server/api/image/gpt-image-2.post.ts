@@ -1,29 +1,34 @@
-import { createError, defineEventHandler, readBody } from 'h3'
+import { createError, defineEventHandler } from 'h3'
 import OpenAI from 'openai'
-import { promptFromBody, requireOpenAiKey } from '../../utils/imageApiCommon'
+import {
+  promptFromBody,
+  readJsonBody,
+  requireOpenAiKey,
+} from '../../utils/imageApiCommon'
 import {
   dataUrlFromOpenAiResult,
   normalizeGptImage2Size,
   normalizeOpenAiQuality,
 } from '../../utils/openAiImageSize'
+import { imageGenResultFromOpenAi, rethrowOpenAiImageError } from '../../utils/openAiImage'
 
 const MODEL = 'gpt-image-2' as const
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
-  const raw = await readBody(event).catch(() => ({}))
-  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
-
   requireOpenAiKey(config)
-  const prompt = promptFromBody(o.prompt)
+
+  const body = await readJsonBody(event)
+  const prompt = promptFromBody(body.prompt)
   if (!prompt) {
     throw createError({ statusCode: 400, message: 'prompt is required.' })
   }
+
   const quality = normalizeOpenAiQuality(
-    typeof o.openai_quality === 'string' ? o.openai_quality : undefined,
+    typeof body.openai_quality === 'string' ? body.openai_quality : undefined,
   )
   const size = normalizeGptImage2Size(
-    typeof o.openai_size === 'string' ? o.openai_size : undefined,
+    typeof body.openai_size === 'string' ? body.openai_size : undefined,
   )
 
   try {
@@ -36,16 +41,15 @@ export default defineEventHandler(async (event) => {
       quality,
     })
     const first = res.data?.[0]
-    const b64 = first?.b64_json
-    const outFmt = first && 'output_format' in first && first.output_format
-      ? (first.output_format as 'png' | 'jpeg' | 'webp')
-      : undefined
-    const output = dataUrlFromOpenAiResult(b64, outFmt)
-    return { output, provider: 'openai', model: MODEL }
+    const output = dataUrlFromOpenAiResult(
+      first?.b64_json,
+      first && 'output_format' in first && first.output_format
+        ? (first.output_format as 'png' | 'jpeg' | 'webp')
+        : undefined,
+    )
+    return imageGenResultFromOpenAi(output, MODEL)
   }
   catch (e: unknown) {
-    if (e && typeof e === 'object' && 'statusCode' in e) throw e
-    const msg = e instanceof Error ? e.message : 'OpenAI image generation failed'
-    throw createError({ statusCode: 502, message: msg })
+    rethrowOpenAiImageError(e)
   }
 })

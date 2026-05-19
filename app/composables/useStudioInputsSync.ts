@@ -1,7 +1,7 @@
 import {
   allowedGeminiAspectRatiosForModel,
   isAllowedGeminiAspectForModel,
-} from '~/utils/geminiAspectRatios'
+} from '~/utils/geminiImageUtils'
 import {
   defaultModelForProvider,
   isAllowedStudioModel,

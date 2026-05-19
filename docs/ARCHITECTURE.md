@@ -21,16 +21,19 @@ For **why** these choices were made (Bun, HTTP codes, route groups, docs split, 
 
 ## Request flow
 
-1. User edits form in **`DashboardStudioContainer`** (loaded from `app/pages/dashboard/(studio).vue`).
-2. `useGenerateImage().generate()` resolves the URL with **`postUrlForImageModel`** (`app/utils/imageApiRoutes.ts`) and **`POST`s** to **`/api/image/<model-slug>`** — one route per studio model.
-3. The matching **`server/api/image/*.post.ts`** reads the body and calls **OpenAI** (`images.generate`) or **Google GenAI** (`generateContent` / `generateContentStream` with image output). Missing key for the selected provider → **503**; vendor failure or empty image → **502** (or upstream status when exposed).
-4. **Enhance prompt** / **Surprise me** call **`POST /api/text/enhance-prompt`** and **`POST /api/text/surprise-prompt`** (`server/utils/promptAssistOpenAi.ts`, OpenAI chat). Same **`OPENAI_API_KEY`** as GPT Image; optional **`OPENAI_PROMPT_MODEL`**.
+1. User edits form in **`DashboardStudioContainer`** (loaded from `app/pages/dashboard/(studio).vue`). Per-model controls live under **`components/Dashboard/Studio/leftPanel/models/`**; state is in **`useStudioStore`**.
+2. **`useGenerateImage().generate()`** builds the JSON body (flat fields for Nanobanana 2, nested `nanobanana_pro` / `nanobanana_25` for other Gemini models) and **`POST`s** to **`postUrlForImageModel(model)`** (`app/utils/imageApiRoutes.ts`).
+3. The matching **`server/api/image/*.post.ts`** uses **`readJsonBody`** and **`requireGeminiKey` / `requireOpenAiKey`** (`server/utils/imageApiCommon.ts`), resolves options via **`app/utils/gemini*.ts`**, then:
+   - **OpenAI** — `images.generate` → data URL (`openAiImageSize.ts`, `openAiImage.ts`)
+   - **Gemini** — `generateGeminiImageFromStream` (`geminiImage.ts`); Nanobanana 2 config from **`geminiNanobanana2Config.ts`**
+4. Missing key → **503**; bad body → **400**; vendor failure or empty image → **502** (details in **`docs/IMAGE_PIPELINE.md`**).
+5. **Enhance prompt** / **Surprise me** → **`POST /api/text/*`** (`server/utils/promptAssistOpenAi.ts`). Same **`OPENAI_API_KEY`** as GPT Image; optional **`OPENAI_PROMPT_MODEL`**.
 
 ## Forking to a new product
 
 1. Copy the repo (or subtree) into a new folder.
 2. Rename branding strings and `AppLogo` if needed.
-3. Add or extend a **`server/api/image/*.post.ts`** route using the same response shape: `{ output: string, provider, model }` (reuse **`server/utils/imageApiCommon.ts`** for auth helpers if needed).
+3. Add **`resolve*Request()`** under **`app/utils/`** when the model has studio controls; add **`server/api/image/*.post.ts`** returning `{ output, provider, model }` (reuse **`imageApiCommon`**, **`geminiImage`**, or **`openAiImage`**).
 4. Add auth, rate limits, and credits when you move beyond a template.
 
 ## Security

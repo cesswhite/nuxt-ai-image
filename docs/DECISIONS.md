@@ -14,9 +14,9 @@ This document explains **why** the template is structured the way it is, not onl
 
 ## Nuxt 4 + Nitro server routes
 
-**Decision:** Full Nuxt with **one Nitro route per image model** under `server/api/image/*.post.ts` (optional tiny helpers in `server/utils/imageApiCommon.ts`).
+**Decision:** Full Nuxt with **one Nitro route per image model** under `server/api/image/*.post.ts`, plus focused helpers in **`server/utils/`** (body parsing, Gemini stream, OpenAI errors, Nanobanana 2 config mapping).
 
-**Why:** Image APIs must use **secret keys** and often **large payloads**. Keeping calls on the server avoids exposing keys in the browser, matches how production apps (e.g. Screenlify, nananuxt) structure AI routes, and lets you add auth, rate limits, and logging in one place later. Split routes make each model’s contract obvious and keep handlers small; Nitro runs everywhere Nuxt deploys (Node, serverless, edge with caveats for vendor SDKs).
+**Why:** Image APIs must use **secret keys** and often **large payloads**. Keeping calls on the server avoids exposing keys in the browser, matches how production apps (e.g. Screenlify, nananuxt) structure AI routes, and lets you add auth, rate limits, and logging in one place later. Split routes make each model’s contract obvious; shared **`server/utils`** avoid duplicating `readBody`, stream collection, and error mapping. **Parsing/clamps** for request bodies live in **`app/utils/gemini*.ts`** so client and server share one source of truth. Nitro runs everywhere Nuxt deploys (Node, serverless, edge with caveats for vendor SDKs).
 
 ---
 
