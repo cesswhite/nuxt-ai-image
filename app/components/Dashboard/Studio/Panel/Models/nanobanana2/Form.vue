@@ -1,156 +1,33 @@
 <template>
-  <div class="space-y-3">
-    <UFormField :ui="labelRowUi">
-      <template #label>
-        <span class="text-xs font-medium text-highlighted/70 inline-block w-full">Output format</span>
-        <UTooltip
-          text="What the model returns: images only, or images plus short text. Pick based on whether you care about captions or explanations alongside the picture."
-          class="cursor-help inline-block"
-          :content="{ side: 'top' }"
-          :delay-duration="0"
-        >
-          <UIcon name="i-lucide-info" class="size-3 shrink-0" />
-        </UTooltip>
-      </template>
-      <DashboardStudioFieldDropdown
-        v-model="studio.nanobanana2OutputFormat"
-        :items="formatItems"
-        :disabled="studio.loading"
-        icon="i-lucide-gallery-horizontal"
-        placeholder="Output format…"
-      />
-    </UFormField>
-    <UFormField :ui="labelRowUi">
-      <template #label>
-        <span class="text-xs font-medium text-highlighted/70 inline-block w-full">Temperature</span>
-        <UTooltip
-          text="How random the model behaves (0–1). Lower = steadier, more predictable images; higher = more variation and surprise. The slider moves in steps of 0.05."
-          class="cursor-help inline-block"
-          :content="{ side: 'top' }"
-          :delay-duration="0"
-        >
-          <UIcon name="i-lucide-info" class="size-3 shrink-0" />
-        </UTooltip>
-      </template>
-      <DashboardStudioTemperatureSlider
-        v-model="studio.nanobanana2Temperature"
-        :disabled="studio.loading"
-      />
-    </UFormField>
-    <UFormField :ui="labelRowUi">
-      <template #label>
-        <span class="text-xs font-medium text-highlighted/70 inline-block w-full">Resolution</span>
-        <UTooltip
-          text="Output image size (e.g. 512, 1K, 2K, 4K). Higher usually means more detail and larger files; the API must support the value you pick."
-          class="cursor-help inline-block"
-          :content="{ side: 'top' }"
-          :delay-duration="0"
-        >
-          <UIcon name="i-lucide-info" class="size-3 shrink-0" />
-        </UTooltip>
-      </template>
-      <DashboardStudioFieldDropdown
-        v-model="studio.nanobanana2ImageSize"
-        :items="resolutionItems"
-        :disabled="studio.loading"
-        icon="i-lucide-maximize-2"
-        placeholder="Resolution…"
-      />
-    </UFormField>
-    <div class="flex flex-col gap-3 border-t border-default/60 pt-2">
-      <USwitch
-        v-model="studio.nanobanana2GroundingWeb"
-        label="Grounding with Google Search"
-        description="Source: Google Search"
-      />
-      <USwitch v-model="studio.nanobanana2GroundingImageSearch" label="Image search" />
-    </div>
-    <DashboardStudioLeftPanelAdvancedDisclosure>
-      <UFormField :ui="labelRowUi">
-        <template #label>
-          <span class="text-xs font-medium text-highlighted/70 inline-block w-full">Add stop sequence</span>
-          <UTooltip
-            text="Truncate response including and after this string. Separate multiple entries with a comma, newline, or |."
-            class="cursor-help inline-block"
-            :content="{ side: 'top' }"
-            :delay-duration="0"
-          >
-            <UIcon name="i-lucide-info" class="size-3 shrink-0" />
-          </UTooltip>
-        </template>
-        <UInput
-          v-model="studio.nanobanana2StopSequencesRaw"
-          variant="outline"
-          placeholder="Add stop…"
-          class="w-full"
-          :disabled="studio.loading"
-        />
-      </UFormField>
-      <UFormField :ui="labelRowUi">
-        <template #label>
-          <span class="text-xs font-medium text-highlighted/70 inline-block w-full">Output length</span>
-          <UTooltip
-            text="Maximum number of tokens in the response (e.g. 65536)."
-            class="cursor-help inline-block"
-            :content="{ side: 'top' }"
-            :delay-duration="0"
-          >
-            <UIcon name="i-lucide-info" class="size-3 shrink-0" />
-          </UTooltip>
-        </template>
-        <UInput
-          v-model.number="studio.nanobanana2MaxOutputTokens"
-          type="number"
-          variant="outline"
-          :min="1"
-          :max="65536"
-          step="1"
-          class="w-full tabular-nums"
-          :disabled="studio.loading"
-          @blur="clampMaxOutputTokens"
-        />
-      </UFormField>
-      <UFormField :ui="labelRowUi">
-        <template #label>
-          <span class="text-xs font-medium text-highlighted/70 inline-block w-full">Top P</span>
-          <UTooltip
-            text="Probability threshold for top-p sampling (0–1). The slider moves in steps of 0.05."
-            class="cursor-help inline-block"
-            :content="{ side: 'top' }"
-            :delay-duration="0"
-          >
-            <UIcon name="i-lucide-info" class="size-3 shrink-0" />
-          </UTooltip>
-        </template>
-        <DashboardStudioTemperatureSlider
-          v-model="studio.nanobanana2TopP"
-          :min="0"
-          :max="1"
-          :step="STUDIO_TOP_P_STEP"
-          :disabled="studio.loading"
-        />
-      </UFormField>
-      <UFormField :ui="labelRowUi">
-        <template #label>
-          <span class="text-xs font-medium text-highlighted/70 inline-block w-full">Thinking level</span>
-          <UTooltip
-            text="How much internal reasoning Gemini uses before the image step, when the API supports it. Higher can help hard prompts; “Default” lets the backend decide."
-            class="cursor-help inline-block"
-            :content="{ side: 'top' }"
-            :delay-duration="0"
-          >
-            <UIcon name="i-lucide-info" class="size-3 shrink-0" />
-          </UTooltip>
-        </template>
-        <DashboardStudioFieldDropdown
-          v-model="studio.nanobanana2ThinkingLevel"
-          :items="thinkingItems"
-          :disabled="studio.loading"
-          icon="i-lucide-brain"
-          placeholder="Thinking level…"
-        />
-      </UFormField>
-    </DashboardStudioLeftPanelAdvancedDisclosure>
+  <div class="flex items-center justify-start gap-2">
+    <DashboardStudioFieldDropdown v-model="studio.nanobanana2OutputFormat" :items="formatItems"
+      :disabled="studio.loading" icon="i-lucide-gallery-horizontal" placeholder="Output format…"
+      :tooltip="formatTooltip" />
+    <DashboardStudioSliderFieldDropdown v-model="studio.nanobanana2Temperature" :disabled="studio.loading"
+      icon="i-lucide-thermometer" placeholder="Temperature…" tooltip="Creativity (0–1)" />
+    <DashboardStudioFieldDropdown v-model="studio.nanobanana2ImageSize" :items="resolutionItems"
+      :disabled="studio.loading" icon="i-lucide-maximize-2" placeholder="Resolution…" :tooltip="resolutionTooltip" />
+    <DashboardStudioContentFieldDropdown :disabled="studio.loading" icon="i-lucide-globe" placeholder="Grounding…"
+      :tooltip="groundingTooltip" content-ui="w-52 p-3">
+      <div class="flex flex-col gap-2">
+        <USwitch v-model="studio.nanobanana2GroundingWeb" label="Google Search" />
+        <USwitch v-model="studio.nanobanana2GroundingImageSearch" label="Image search" />
+      </div>
+    </DashboardStudioContentFieldDropdown>
+    <DashboardStudioContentFieldDropdown :disabled="studio.loading" icon="i-lucide-circle-stop"
+      placeholder="Stop sequences…" tooltip="Stop strings · , | or newline" content-ui="w-52 p-3">
+      <UInput v-model="studio.nanobanana2StopSequencesRaw" variant="outline" placeholder="Add stop…" class="w-full"
+        :disabled="studio.loading" />
+    </DashboardStudioContentFieldDropdown>
+    <DashboardStudioContentFieldDropdown :disabled="studio.loading" icon="i-lucide-hash" placeholder="Output length…"
+      tooltip="Max output tokens" content-ui="w-52 p-3">
+      <UInput v-model.number="studio.nanobanana2MaxOutputTokens" type="number" variant="outline" :min="1" :max="65536"
+        step="1" class="w-full tabular-nums" :disabled="studio.loading" @blur="clampMaxOutputTokens" />
+    </DashboardStudioContentFieldDropdown>
+    <DashboardStudioSliderFieldDropdown v-model="studio.nanobanana2TopP" :disabled="studio.loading"
+      icon="i-lucide-percent" placeholder="Top P…" tooltip="Top P (0–1)" :step="STUDIO_TOP_P_STEP" />
+    <DashboardStudioFieldDropdown v-model="studio.nanobanana2ThinkingLevel" :items="thinkingItems"
+      :disabled="studio.loading" icon="i-lucide-brain" placeholder="Thinking level…" :tooltip="thinkingTooltip" />
   </div>
 </template>
 
@@ -163,9 +40,33 @@ import {
   STUDIO_TOP_P_STEP,
 } from '~/utils/geminiImageUtils'
 
-const labelRowUi = { label: 'flex items-center justify-between w-full' } as const
-
 const studio = useStudioStore()
+
+function itemLabel<T extends { label: string, value: string | number }>(
+  items: T[],
+  value: string | number,
+) {
+  return items.find((i) => i.value === value)?.label ?? String(value)
+}
+
+const formatTooltip = computed(
+  () => `Format · ${itemLabel(formatItems, studio.nanobanana2OutputFormat)}`,
+)
+
+const resolutionTooltip = computed(
+  () => `Resolution · ${studio.nanobanana2ImageSize}`,
+)
+
+const groundingTooltip = computed(() => {
+  const on: string[] = []
+  if (studio.nanobanana2GroundingWeb) on.push('web')
+  if (studio.nanobanana2GroundingImageSearch) on.push('images')
+  return `Grounding · ${on.length === 0 ? 'off' : on.join(', ')}`
+})
+
+const thinkingTooltip = computed(
+  () => `Reasoning · ${itemLabel(thinkingItems, studio.nanobanana2ThinkingLevel)}`,
+)
 
 function clampMaxOutputTokens() {
   studio.nanobanana2MaxOutputTokens = clampStudioMaxOutputTokens(

@@ -1,28 +1,16 @@
 <template>
-  <div v-if="studio.provider === 'openai'" class="space-y-3">
+  <div v-if="studio.provider === 'openai'" class="space-y-3 flex items-center justify-center">
     <UFormField v-if="isOpenAi15" label="Aspect ratio">
-      <DashboardStudioFieldDropdown
-        v-model="studio.aspectRatio"
-        :items="gptImage15AspectItems"
-        icon="i-lucide-ratio"
-        placeholder="Aspect ratio…"
-      />
+      <DashboardStudioFieldDropdown v-model="studio.aspectRatio" :items="gptImage15AspectItems" icon="i-lucide-ratio"
+        placeholder="Aspect ratio…" />
     </UFormField>
     <UFormField v-if="isOpenAi2" label="Size">
-      <DashboardStudioFieldDropdown
-        v-model="studio.openAiGptImage2Size"
-        :items="gptImage2SizeItems"
-        icon="i-lucide-scan"
-        placeholder="Size…"
-      />
+      <DashboardStudioFieldDropdown v-model="studio.openAiGptImage2Size" :items="gptImage2SizeItems"
+        icon="i-lucide-scan" placeholder="Size…" />
     </UFormField>
     <UFormField label="Quality">
-      <DashboardStudioFieldDropdown
-        v-model="studio.openAiQuality"
-        :items="openAiQualityItems"
-        icon="i-lucide-badge-check"
-        placeholder="Quality…"
-      />
+      <DashboardStudioFieldDropdown v-model="studio.openAiQuality" :items="openAiQualityItems"
+        icon="i-lucide-badge-check" placeholder="Quality…" />
     </UFormField>
   </div>
 </template>

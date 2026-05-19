@@ -1,7 +1,6 @@
 @import "tailwindcss" theme(static);
 @import "@nuxt/ui";
 
-
 /* See config: https://ui3.nuxt.dev/getting-started/theme#colors */
 @theme {
   --font-family-inter: "Inter", sans-serif;
@@ -18,6 +17,8 @@
   --color-dark-800: var(--ui-color-neutral-800);
   --color-dark-900: var(--ui-color-neutral-900);
   --color-dark-950: var(--ui-color-neutral-950);
+
+  --text-xxs: 0.7rem;
 }
 
 /* For Webkit-based browsers (Chrome, Safari and Opera) */
@@ -29,4 +30,8 @@
 .scrollbar-hide {
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
+}
+
+.\? {
+  outline: 1px solid red;
 }
